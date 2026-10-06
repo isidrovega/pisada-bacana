@@ -2,7 +2,8 @@
 
 /* =====================================================
    PISADA BACANA
-   NOTA DE SERVICIO + WHATSAPP
+   NOTA DE SERVICIO
+   PDF + COMPARTIR POR WHATSAPP
 ===================================================== */
 
 (() => {
@@ -11,9 +12,9 @@
        ESTADO
     ================================================= */
 
-    let currentNoteOrderId = null;
     let currentNoteOrder = null;
     let currentNoteSettings = null;
+    let isGeneratingPDF = false;
 
 
     /* =================================================
@@ -61,6 +62,7 @@
             ).format(
                 Number(value) || 0
             );
+
         } catch {
             return `$${Number(value || 0).toFixed(2)}`;
         }
@@ -97,6 +99,7 @@
             date = new Date(value);
         }
 
+
         if (
             Number.isNaN(
                 date.getTime()
@@ -104,6 +107,7 @@
         ) {
             return "Sin fecha";
         }
+
 
         return new Intl.DateTimeFormat(
             "es-MX",
@@ -115,6 +119,20 @@
         )
             .format(date)
             .replace(".", "");
+    }
+
+
+    function sanitizeFileName(value) {
+        return String(value || "nota")
+            .trim()
+            .replace(
+                /[^a-zA-Z0-9-_]/g,
+                "-"
+            )
+            .replace(
+                /-+/g,
+                "-"
+            );
     }
 
 
@@ -131,14 +149,10 @@
             return null;
         }
 
+
         const database =
             getDatabase();
 
-
-        /*
-            Primero intentamos buscar directamente
-            usando el ID del documento.
-        */
 
         try {
             const directOrder =
@@ -158,13 +172,9 @@
         }
 
 
-        /*
-            Si recibimos un folio como PB-0001,
-            buscamos dentro de todos los pedidos.
-        */
-
         const orders =
             await database.getOrders();
+
 
         return (
             orders.find(
@@ -218,10 +228,6 @@
         }
 
 
-        /*
-            Compatibilidad con pedidos antiguos.
-        */
-
         return [{
             itemType:
                 order.itemType ||
@@ -269,6 +275,7 @@
             );
         }
 
+
         return Math.max(
             Number(
                 order.total ??
@@ -297,29 +304,13 @@
             );
         }
 
+
         return Math.max(
             Number(
                 order.paid ??
                     order.advance ??
                     0
             ),
-            0
-        );
-    }
-
-
-    function getBalance(order) {
-        const total =
-            getOrderTotal(order);
-
-        const paid =
-            Math.min(
-                getPaidAmount(order),
-                total
-            );
-
-        return Math.max(
-            total - paid,
             0
         );
     }
@@ -358,6 +349,7 @@
             settings.negocio ||
             settings.businessInfo ||
             settings;
+
 
         return {
             name:
@@ -485,6 +477,7 @@
                 .filter(Boolean);
         }
 
+
         if (
             Array.isArray(
                 settings.business?.terms
@@ -495,6 +488,7 @@
                 .map(String)
                 .filter(Boolean);
         }
+
 
         return [
             "Recepción: Todo calzado o gorra se recibe bajo revisión previa. Los detalles de desgaste, manchas fijas o daños previos se consideran parte de la condición de recepción.",
@@ -518,6 +512,7 @@
             )
             .filter(Boolean);
 
+
         if (
             parts.length === 0 &&
             item.itemType
@@ -527,12 +522,13 @@
             );
         }
 
+
         return parts.join(" ");
     }
 
 
     /* =================================================
-       CREAR MODAL
+       MODAL
     ================================================= */
 
     function ensureNoteModal() {
@@ -541,14 +537,17 @@
                 "serviceNoteModal"
             );
 
+
         if (modal) {
             return modal;
         }
+
 
         modal =
             document.createElement(
                 "div"
             );
+
 
         modal.id =
             "serviceNoteModal";
@@ -578,9 +577,9 @@
                     <button
                         type="button"
                         class="note-toolbar-button primary"
-                        id="sendWhatsAppNoteButton"
+                        id="shareServiceNoteButton"
                     >
-                        Enviar por WhatsApp
+                        Enviar PDF por WhatsApp
                     </button>
 
 
@@ -626,11 +625,11 @@
 
         document
             .getElementById(
-                "sendWhatsAppNoteButton"
+                "shareServiceNoteButton"
             )
             .addEventListener(
                 "click",
-                sendServiceNoteWhatsApp
+                shareServiceNotePDF
             );
 
 
@@ -650,6 +649,7 @@
             document.getElementById(
                 "serviceNote"
             );
+
 
         if (!note) {
             return;
@@ -671,10 +671,14 @@
             "MXN";
 
         const items =
-            getOrderItems(order);
+            getOrderItems(
+                order
+            );
 
         const total =
-            getOrderTotal(order);
+            getOrderTotal(
+                order
+            );
 
         const paid =
             Math.min(
@@ -720,6 +724,7 @@
                                 item
                             );
 
+
                         return `
                             <tr>
 
@@ -742,7 +747,7 @@
                                     >
                                         ${escapeHTML(
                                             description ||
-                                                item.itemType
+                                            item.itemType
                                         )}
                                     </span>
 
@@ -900,7 +905,7 @@
                     <strong>
                         ${escapeHTML(
                             order.code ||
-                                "Sin folio"
+                            "Sin folio"
                         )}
                     </strong>
 
@@ -930,7 +935,7 @@
                         <strong>
                             ${escapeHTML(
                                 order.clientName ||
-                                    "Sin cliente"
+                                "Sin cliente"
                             )}
                         </strong>
                     </div>
@@ -942,7 +947,7 @@
                         <strong>
                             ${escapeHTML(
                                 order.phone ||
-                                    "Sin teléfono"
+                                "Sin teléfono"
                             )}
                         </strong>
                     </div>
@@ -969,7 +974,7 @@
                         <strong>
                             ${escapeHTML(
                                 order.status ||
-                                    "Recibido"
+                                "Recibido"
                             )}
                         </strong>
                     </div>
@@ -1043,7 +1048,7 @@
                     <strong>
                         ${escapeHTML(
                             order.paymentMethod ||
-                                "No especificado"
+                            "No especificado"
                         )}
                     </strong>
 
@@ -1114,7 +1119,7 @@
             <footer class="note-footer">
                 ${escapeHTML(
                     business.message ||
-                        "Gracias por confiar en Pisada Bacana."
+                    "Gracias por confiar en Pisada Bacana."
                 )}
             </footer>
         `;
@@ -1122,7 +1127,7 @@
 
 
     /* =================================================
-       ABRIR NOTA
+       ABRIR / CERRAR
     ================================================= */
 
     async function openServiceNote(
@@ -1138,10 +1143,7 @@
                 settings
             ] =
                 await Promise.all([
-                    findOrder(
-                        orderId
-                    ),
-
+                    findOrder(orderId),
                     database.getSettings()
                 ]);
 
@@ -1154,9 +1156,6 @@
                 return;
             }
 
-
-            currentNoteOrderId =
-                order.id;
 
             currentNoteOrder =
                 order;
@@ -1198,9 +1197,10 @@
 
         } catch (error) {
             console.error(
-                "No se pudo consultar la nota:",
+                "No se pudo cargar la nota:",
                 error
             );
+
 
             window.alert(
                 "No se pudo cargar la nota desde Firebase."
@@ -1208,10 +1208,6 @@
         }
     }
 
-
-    /* =================================================
-       CERRAR NOTA
-    ================================================= */
 
     function closeServiceNote() {
         const modal =
@@ -1230,21 +1226,12 @@
         );
 
 
-        currentNoteOrderId =
-            null;
-
         currentNoteOrder =
             null;
 
         currentNoteSettings =
             null;
 
-
-        /*
-            Si sigue abierto el drawer,
-            sidebar u otro modal, mantenemos
-            bloqueado el scroll.
-        */
 
         const otherOpenElement =
             document.querySelector(
@@ -1261,219 +1248,474 @@
 
 
     /* =================================================
-       WHATSAPP
+       ESPERAR IMÁGENES
     ================================================= */
 
-    function normalizeWhatsAppPhone(
-        value
+    async function waitForImages(
+        element
     ) {
-        let phone =
-            String(value || "")
-                .replace(/\D/g, "");
-
-
-        if (!phone) {
-            return "";
-        }
-
-
-        /*
-            Si el teléfono mexicano está guardado
-            como 10 dígitos, agregamos +52.
-
-            WhatsApp wa.me requiere únicamente
-            números, sin +, espacios ni guiones.
-        */
-
-        if (phone.length === 10) {
-            phone =
-                `52${phone}`;
-        }
-
-
-        return phone;
-    }
-
-
-    function buildWhatsAppMessage(
-        order,
-        settings = {}
-    ) {
-        const business =
-            getBusinessData(
-                settings
-            );
-
-        const currency =
-            settings.orders?.currency ||
-            "MXN";
-
-        const items =
-            getOrderItems(
-                order
-            );
-
-        const total =
-            getOrderTotal(
-                order
-            );
-
-        const paid =
-            Math.min(
-                getPaidAmount(
-                    order
-                ),
-                total
-            );
-
-        const balance =
-            Math.max(
-                total - paid,
-                0
+        const images =
+            Array.from(
+                element.querySelectorAll(
+                    "img"
+                )
             );
 
 
-        const itemLines =
-            items
-                .map(
-                    (item, index) => {
+        await Promise.all(
+            images.map(
+                image => {
 
-                        const description =
-                            buildItemDescription(
-                                item
+                    if (
+                        image.complete &&
+                        image.naturalWidth > 0
+                    ) {
+                        return Promise.resolve();
+                    }
+
+
+                    return new Promise(
+                        resolve => {
+
+                            const finish =
+                                () => resolve();
+
+
+                            image.addEventListener(
+                                "load",
+                                finish,
+                                {
+                                    once: true
+                                }
                             );
 
 
-                        const lines = [
-                            `${index + 1}. *${item.service || "Servicio"}*`
-                        ];
+                            image.addEventListener(
+                                "error",
+                                finish,
+                                {
+                                    once: true
+                                }
+                            );
 
 
-                        if (description) {
-                            lines.push(
-                                description
+                            setTimeout(
+                                finish,
+                                3000
                             );
                         }
-
-
-                        lines.push(
-                            formatMoney(
-                                item.price,
-                                currency
-                            )
-                        );
-
-
-                        return lines.join(
-                            "\n"
-                        );
-                    }
-                )
-                .join("\n\n");
-
-
-        const messageLines = [
-            `*${business.name || "Pisada Bacana"}*`,
-            "Comprobante de servicio",
-            "",
-            `*Folio:* ${order.code || "Sin folio"}`,
-            `*Cliente:* ${order.clientName || "Sin cliente"}`,
-            `*Estado:* ${order.status || "Recibido"}`,
-            `*Entrega estimada:* ${formatNoteDate(
-                order.deliveryDate
-            )}`,
-            "",
-            "*Servicios*",
-            "",
-            itemLines,
-            "",
-            `*Total:* ${formatMoney(
-                total,
-                currency
-            )}`,
-            `*Pagado:* ${formatMoney(
-                paid,
-                currency
-            )}`,
-            `*Saldo:* ${formatMoney(
-                balance,
-                currency
-            )}`
-        ];
-
-
-        if (
-            String(
-                order.notes || ""
-            ).trim()
-        ) {
-            messageLines.push(
-                "",
-                "*Observaciones:*",
-                String(
-                    order.notes
-                ).trim()
-            );
-        }
-
-
-        /*
-            Añadimos el mensaje configurado
-            en Ajustes.
-        */
-
-        if (
-            String(
-                business.message || ""
-            ).trim()
-        ) {
-            messageLines.push(
-                "",
-                String(
-                    business.message
-                ).trim()
-            );
-        }
-
-
-        /*
-            Datos de contacto opcionales
-            del negocio.
-        */
-
-        const contactLines = [];
-
-
-        if (business.phone) {
-            contactLines.push(
-                `Tel: ${business.phone}`
-            );
-        }
-
-
-        if (business.instagram) {
-            contactLines.push(
-                `Instagram: ${business.instagram}`
-            );
-        }
-
-
-        if (contactLines.length) {
-            messageLines.push(
-                "",
-                contactLines.join(
-                    "\n"
-                )
-            );
-        }
-
-
-        return messageLines
-            .join("\n");
+                    );
+                }
+            )
+        );
     }
 
 
-    function sendServiceNoteWhatsApp() {
+    /* =================================================
+       GENERAR PDF
+    ================================================= */
+
+    async function generateServiceNotePDF() {
+        if (!currentNoteOrder) {
+            throw new Error(
+                "No hay una nota cargada."
+            );
+        }
+
+
+        if (
+            typeof window.html2canvas !==
+            "function"
+        ) {
+            throw new Error(
+                "html2canvas no está disponible."
+            );
+        }
+
+
+        if (
+            !window.jspdf ||
+            !window.jspdf.jsPDF
+        ) {
+            throw new Error(
+                "jsPDF no está disponible."
+            );
+        }
+
+
+        const note =
+            document.getElementById(
+                "serviceNote"
+            );
+
+
+        if (!note) {
+            throw new Error(
+                "No se encontró la nota."
+            );
+        }
+
+
+        /*
+            Esperamos fuentes e imágenes antes
+            de capturar el comprobante.
+        */
+
+        if (document.fonts?.ready) {
+            try {
+                await document.fonts.ready;
+            } catch {
+                // Continuamos aunque una fuente falle.
+            }
+        }
+
+
+        await waitForImages(
+            note
+        );
+
+
+        /*
+            Capturamos el comprobante exactamente
+            como se muestra en pantalla.
+
+            El toolbar no forma parte de #serviceNote,
+            por lo que no aparecerá en el PDF.
+        */
+
+        const canvas =
+            await window.html2canvas(
+                note,
+                {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor:
+                        "#ffffff",
+                    logging: false,
+                    imageTimeout: 5000,
+                    scrollX: 0,
+                    scrollY:
+                        -window.scrollY
+                }
+            );
+
+
+        const imageData =
+            canvas.toDataURL(
+                "image/jpeg",
+                0.95
+            );
+
+
+        const {
+            jsPDF
+        } = window.jspdf;
+
+
+        /*
+            A4:
+            210 x 297 mm
+        */
+
+        const pdf =
+            new jsPDF({
+                orientation:
+                    "portrait",
+                unit:
+                    "mm",
+                format:
+                    "a4",
+                compress:
+                    true
+            });
+
+
+        const pageWidth =
+            pdf.internal.pageSize
+                .getWidth();
+
+        const pageHeight =
+            pdf.internal.pageSize
+                .getHeight();
+
+
+        const margin =
+            8;
+
+
+        const usableWidth =
+            pageWidth -
+            margin * 2;
+
+
+        const usableHeight =
+            pageHeight -
+            margin * 2;
+
+
+        const imageWidth =
+            usableWidth;
+
+
+        const imageHeight =
+            canvas.height *
+            imageWidth /
+            canvas.width;
+
+
+        /*
+            Si la nota cabe en una hoja:
+            una sola página.
+        */
+
+        if (
+            imageHeight <=
+            usableHeight
+        ) {
+            pdf.addImage(
+                imageData,
+                "JPEG",
+                margin,
+                margin,
+                imageWidth,
+                imageHeight,
+                undefined,
+                "FAST"
+            );
+
+        } else {
+
+            /*
+                Para notas largas dividimos la misma
+                captura entre varias páginas A4.
+
+                De esta manera no aplastamos el
+                contenido para hacerlo ilegible.
+            */
+
+            const pixelsPerMM =
+                canvas.width /
+                imageWidth;
+
+
+            const pageSliceHeight =
+                Math.floor(
+                    usableHeight *
+                    pixelsPerMM
+                );
+
+
+            let sourceY =
+                0;
+
+            let pageNumber =
+                0;
+
+
+            while (
+                sourceY <
+                canvas.height
+            ) {
+                const sliceHeight =
+                    Math.min(
+                        pageSliceHeight,
+                        canvas.height -
+                        sourceY
+                    );
+
+
+                const pageCanvas =
+                    document.createElement(
+                        "canvas"
+                    );
+
+
+                pageCanvas.width =
+                    canvas.width;
+
+                pageCanvas.height =
+                    sliceHeight;
+
+
+                const context =
+                    pageCanvas.getContext(
+                        "2d"
+                    );
+
+
+                if (!context) {
+                    throw new Error(
+                        "No se pudo preparar una página del PDF."
+                    );
+                }
+
+
+                context.fillStyle =
+                    "#ffffff";
+
+                context.fillRect(
+                    0,
+                    0,
+                    pageCanvas.width,
+                    pageCanvas.height
+                );
+
+
+                context.drawImage(
+                    canvas,
+                    0,
+                    sourceY,
+                    canvas.width,
+                    sliceHeight,
+                    0,
+                    0,
+                    canvas.width,
+                    sliceHeight
+                );
+
+
+                if (
+                    pageNumber > 0
+                ) {
+                    pdf.addPage();
+                }
+
+
+                const pageImage =
+                    pageCanvas.toDataURL(
+                        "image/jpeg",
+                        0.95
+                    );
+
+
+                const renderedHeight =
+                    sliceHeight /
+                    pixelsPerMM;
+
+
+                pdf.addImage(
+                    pageImage,
+                    "JPEG",
+                    margin,
+                    margin,
+                    imageWidth,
+                    renderedHeight,
+                    undefined,
+                    "FAST"
+                );
+
+
+                sourceY +=
+                    sliceHeight;
+
+                pageNumber +=
+                    1;
+            }
+        }
+
+
+        const blob =
+            pdf.output(
+                "blob"
+            );
+
+
+        const code =
+            sanitizeFileName(
+                currentNoteOrder.code ||
+                currentNoteOrder.id ||
+                "nota"
+            );
+
+
+        const fileName =
+            `Pisada-Bacana-${code}.pdf`;
+
+
+        const file =
+            new File(
+                [blob],
+                fileName,
+                {
+                    type:
+                        "application/pdf",
+                    lastModified:
+                        Date.now()
+                }
+            );
+
+
+        return {
+            pdf,
+            blob,
+            file,
+            fileName
+        };
+    }
+
+
+    /* =================================================
+       DESCARGA FALLBACK
+    ================================================= */
+
+    function downloadPDF(
+        blob,
+        fileName
+    ) {
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        const link =
+            document.createElement(
+                "a"
+            );
+
+
+        link.href =
+            url;
+
+        link.download =
+            fileName;
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        link.remove();
+
+
+        setTimeout(
+            () => {
+                URL.revokeObjectURL(
+                    url
+                );
+            },
+            1000
+        );
+    }
+
+
+    /* =================================================
+       COMPARTIR PDF
+    ================================================= */
+
+    async function shareServiceNotePDF() {
+        if (
+            isGeneratingPDF
+        ) {
+            return;
+        }
+
+
         if (!currentNoteOrder) {
             window.alert(
                 "No hay una nota cargada."
@@ -1483,75 +1725,150 @@
         }
 
 
-        const phone =
-            normalizeWhatsAppPhone(
-                currentNoteOrder.phone
+        const button =
+            document.getElementById(
+                "shareServiceNoteButton"
             );
 
 
-        if (!phone) {
-            const continueWithoutPhone =
-                window.confirm(
-                    "Este cliente no tiene teléfono registrado. ¿Quieres abrir WhatsApp y elegir el contacto manualmente?"
-                );
+        const originalText =
+            button?.textContent ||
+            "Enviar PDF por WhatsApp";
 
 
-            if (!continueWithoutPhone) {
-                return;
+        try {
+            isGeneratingPDF =
+                true;
+
+
+            if (button) {
+                button.disabled =
+                    true;
+
+                button.textContent =
+                    "Generando PDF...";
             }
-        }
 
 
-        const message =
-            buildWhatsAppMessage(
-                currentNoteOrder,
-                currentNoteSettings || {}
+            const {
+                blob,
+                file,
+                fileName
+            } =
+                await generateServiceNotePDF();
+
+
+            /*
+                Web Share API.
+
+                No podemos obligar al sistema a abrir
+                exclusivamente WhatsApp. El navegador
+                abre el menú nativo de compartir y el
+                usuario selecciona WhatsApp.
+
+                Esto sí permite pasar el PDF como
+                archivo adjunto.
+            */
+
+            const canShareFile =
+                typeof navigator.share ===
+                    "function" &&
+                typeof navigator.canShare ===
+                    "function" &&
+                navigator.canShare({
+                    files: [file]
+                });
+
+
+            if (canShareFile) {
+
+                if (button) {
+                    button.textContent =
+                        "Abriendo opciones...";
+                }
+
+
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title:
+                            `Nota ${currentNoteOrder.code || ""}`
+                    });
+
+
+                    return;
+
+                } catch (error) {
+
+                    /*
+                        AbortError significa que el usuario
+                        cerró el selector. No descargamos
+                        automáticamente porque no fue un
+                        fallo técnico.
+                    */
+
+                    if (
+                        error?.name ===
+                        "AbortError"
+                    ) {
+                        return;
+                    }
+
+
+                    console.warn(
+                        "No se pudo compartir el PDF:",
+                        error
+                    );
+                }
+            }
+
+
+            /*
+                Fallback para computadoras o navegadores
+                que no permiten compartir archivos.
+
+                Guardamos exactamente el mismo PDF.
+            */
+
+            downloadPDF(
+                blob,
+                fileName
             );
 
 
-        const encodedMessage =
-            encodeURIComponent(
-                message
+            window.alert(
+                "Tu navegador no permite compartir el PDF directamente. La nota se descargó para que puedas adjuntarla en WhatsApp Web."
+            );
+
+        } catch (error) {
+            console.error(
+                "No se pudo generar la nota PDF:",
+                error
             );
 
 
-        /*
-            Con teléfono:
-            abre directamente el chat del cliente.
-
-            Sin teléfono:
-            abre WhatsApp con el mensaje para
-            seleccionar el contacto manualmente.
-        */
-
-        const whatsappURL =
-            phone
-                ? `https://wa.me/${phone}?text=${encodedMessage}`
-                : `https://wa.me/?text=${encodedMessage}`;
-
-
-        const whatsappWindow =
-            window.open(
-                whatsappURL,
-                "_blank",
-                "noopener,noreferrer"
+            window.alert(
+                "No se pudo generar el PDF de la nota. Revisa la consola del navegador para ver el error."
             );
 
+        } finally {
+            isGeneratingPDF =
+                false;
 
-        /*
-            Algunos navegadores pueden bloquear
-            ventanas nuevas.
-        */
 
-        if (!whatsappWindow) {
-            window.location.href =
-                whatsappURL;
+            if (button) {
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    originalText;
+            }
         }
     }
 
 
     /* =================================================
-       BOTÓN PARA DRAWER
+       BOTÓN DEL DRAWER
     ================================================= */
 
     function createDrawerNoteButton() {
@@ -1566,12 +1883,6 @@
         }
 
 
-        /*
-            Compatibilidad:
-            evitamos crear dos botones si existe
-            el ID antiguo o el nuevo.
-        */
-
         const existingButton =
             document.getElementById(
                 "openServiceNoteButton"
@@ -1582,11 +1893,6 @@
 
 
         if (existingButton) {
-            /*
-                Si existe el botón de una versión
-                anterior, actualizamos su texto.
-            */
-
             existingButton.textContent =
                 "Nota de servicio";
 
@@ -1617,11 +1923,6 @@
             "click",
             () => {
 
-                /*
-                    Obtenemos el folio que ya muestra
-                    el drawer de pedidos.
-                */
-
                 const codeElement =
                     document.getElementById(
                         "detailOrderCode"
@@ -1631,7 +1932,7 @@
                 const code =
                     String(
                         codeElement?.textContent ||
-                            ""
+                        ""
                     ).trim();
 
 
@@ -1650,11 +1951,6 @@
             }
         );
 
-
-        /*
-            Lo insertamos antes de Guardar cambios
-            cuando ese botón está disponible.
-        */
 
         const saveButton =
             document.getElementById(
@@ -1677,7 +1973,7 @@
 
 
     /* =================================================
-       ESC
+       TECLA ESC
     ================================================= */
 
     document.addEventListener(
@@ -1685,7 +1981,8 @@
         event => {
 
             if (
-                event.key !== "Escape"
+                event.key !==
+                "Escape"
             ) {
                 return;
             }
@@ -1713,16 +2010,17 @@
     ================================================= */
 
     window.PisadaBacanaNote = {
-
         open:
             openServiceNote,
 
         close:
             closeServiceNote,
 
-        whatsapp:
-            sendServiceNoteWhatsApp
+        sharePDF:
+            shareServiceNotePDF,
 
+        generatePDF:
+            generateServiceNotePDF
     };
 
 
