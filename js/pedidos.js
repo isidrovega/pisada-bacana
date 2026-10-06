@@ -1,5 +1,21 @@
 "use strict";
 
+function getDatabase() {
+
+    if (
+        !window.PisadaBacanaDB
+    ) {
+
+        throw new Error(
+            "Firebase todavía no está listo."
+        );
+
+    }
+
+    return window.PisadaBacanaDB;
+
+}
+
 /* =====================================================
    FIRESTORE
 ===================================================== */
@@ -2731,7 +2747,6 @@ async function saveOrderChanges() {
     const order =
         getSelectedOrder();
 
-
     if (!order) {
 
         showToast(
@@ -2743,35 +2758,30 @@ async function saveOrderChanges() {
 
     }
 
-
     try {
 
         const previousStatus =
             order.status;
 
-
         order.status =
             detailStatus.value;
-
 
         order.deliveryDate =
             detailDeliveryDate.value;
 
-
-        order.notes =
-            detailNotes.value.trim();
-
+        /*
+            detailNotes es un <p> en tu HTML actual.
+            Las notas NO se editan desde el drawer,
+            por lo tanto conservamos order.notes.
+        */
 
         order.updatedAt =
             new Date()
                 .toISOString();
 
-
         if (
-            order.status ===
-                "Entregado" &&
-            previousStatus !==
-                "Entregado"
+            order.status === "Entregado" &&
+            previousStatus !== "Entregado"
         ) {
 
             order.deliveredAt =
@@ -2780,38 +2790,29 @@ async function saveOrderChanges() {
 
         }
 
-
         if (
-            order.status !==
-            "Entregado"
+            order.status !== "Entregado"
         ) {
 
-            delete order
-                .deliveredAt;
+            delete order.deliveredAt;
 
         }
-
 
         await getDatabase()
             .saveOrder(
                 order
             );
 
-
         orders =
             await getDatabase()
                 .getOrders();
 
-
         renderEverything();
 
-        openOrderDetail(
-            order.id
-        );
-
+        closeOrderDetail();
 
         showToast(
-            `${order.code} actualizado.`
+            "Pedido actualizado."
         );
 
     } catch (error) {
@@ -2820,7 +2821,6 @@ async function saveOrderChanges() {
             "Error actualizando pedido:",
             error
         );
-
 
         showToast(
             "No se pudieron guardar los cambios.",
@@ -2840,7 +2840,6 @@ async function registerPayment() {
     const order =
         getSelectedOrder();
 
-
     if (!order) {
 
         showToast(
@@ -2852,26 +2851,36 @@ async function registerPayment() {
 
     }
 
-
-    const amount =
+    const payment =
         Number(
-            paymentAmount.value || 0
+            paymentAmount.value
         );
 
+    if (
+        !Number.isFinite(payment) ||
+        payment <= 0
+    ) {
 
-    const currentBalance =
+        showToast(
+            "Ingresa un pago válido.",
+            true
+        );
+
+        return;
+
+    }
+
+    const balance =
         getOrderBalance(
             order
         );
 
-
     if (
-        !Number.isFinite(amount) ||
-        amount <= 0
+        balance <= 0
     ) {
 
         showToast(
-            "Ingresa una cantidad válida.",
+            "Este pedido ya está pagado.",
             true
         );
 
@@ -2879,28 +2888,26 @@ async function registerPayment() {
 
     }
 
-
     if (
-        amount >
-        currentBalance
+        payment > balance
     ) {
 
         showToast(
-            "El pago no puede ser mayor al saldo.",
+            `El pago no puede superar ${formatMoney(
+                balance
+            )}.`,
             true
         );
 
         return;
 
     }
-
 
     try {
 
         const now =
             new Date()
                 .toISOString();
-
 
         if (
             !Array.isArray(
@@ -2912,6 +2919,13 @@ async function registerPayment() {
 
         }
 
+        /*
+            Tu drawer actual no tiene selector
+            de método de pago.
+
+            Por ahora usamos el método registrado
+            originalmente en el pedido.
+        */
 
         order.payments.push({
             id:
@@ -2919,10 +2933,12 @@ async function registerPayment() {
                     "payment"
                 ),
 
-            amount,
+            amount:
+                payment,
 
             method:
-                paymentMethodDetail.value,
+                order.paymentMethod ||
+                "Efectivo",
 
             type:
                 "Pago",
@@ -2931,73 +2947,67 @@ async function registerPayment() {
                 now
         });
 
-
         const paid =
             order.payments.reduce(
-                (sum, payment) =>
-                    sum +
+                (total, movement) =>
+                    total +
                     Math.max(
                         Number(
-                            payment.amount || 0
+                            movement.amount || 0
                         ),
                         0
                     ),
                 0
             );
 
-
         order.paid =
             paid;
 
-
         /*
-            advance se conserva temporalmente para
-            Dashboard/Caja/Reportes mientras
-            terminamos su conversión.
+            Compatibilidad temporal con Caja,
+            Dashboard y Reportes.
         */
 
         order.advance =
             paid;
 
-
         order.balance =
             Math.max(
-                Number(
-                    order.price || 0
-                ) -
+                getOrderTotal(order) -
                 paid,
                 0
             );
 
-
         order.updatedAt =
             now;
-
 
         await getDatabase()
             .saveOrder(
                 order
             );
 
-
         orders =
             await getDatabase()
                 .getOrders();
 
-
         paymentAmount.value =
             "";
 
-
         renderEverything();
+
+        /*
+            Volvemos a pintar el drawer con
+            los totales actualizados.
+        */
 
         openOrderDetail(
             order.id
         );
 
-
         showToast(
-            `Pago de ${formatMoney(amount)} registrado.`
+            `Pago de ${formatMoney(
+                payment
+            )} registrado.`
         );
 
     } catch (error) {
@@ -3006,7 +3016,6 @@ async function registerPayment() {
             "Error registrando pago:",
             error
         );
-
 
         showToast(
             "No se pudo registrar el pago.",
