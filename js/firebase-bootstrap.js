@@ -19,16 +19,23 @@ window.PisadaBacanaData = {
 };
 
 
-let unsubscribeOrders = null;
-let unsubscribeSettings = null;
+let unsubscribeOrders =
+    null;
+
+let unsubscribeSettings =
+    null;
+
+let initializationCompleted =
+    false;
 
 
 /* =====================================================
    EVENTOS
 ===================================================== */
 
-function dispatchOrdersUpdated(orders) {
-
+function emitOrdersUpdated(
+    orders
+) {
     window.dispatchEvent(
         new CustomEvent(
             "pisadabacana:orders-updated",
@@ -42,8 +49,9 @@ function dispatchOrdersUpdated(orders) {
 }
 
 
-function dispatchSettingsUpdated(settings) {
-
+function emitSettingsUpdated(
+    settings
+) {
     window.dispatchEvent(
         new CustomEvent(
             "pisadabacana:settings-updated",
@@ -58,25 +66,12 @@ function dispatchSettingsUpdated(settings) {
 
 
 /* =====================================================
-   FIRESTORE
+   INICIALIZACIÓN
 ===================================================== */
 
-async function initializeFirebaseData() {
-
+async function initializeFirestore() {
     try {
-
         await ensureAnonymousSession();
-
-        /*
-            Importación histórica.
-
-            Si este navegador ya fue migrado,
-            database.js no vuelve a importar
-            los datos antiguos.
-        */
-
-        await PisadaBacanaDB
-            .migrateLocalDataOnce();
 
 
         /*
@@ -88,8 +83,11 @@ async function initializeFirebaseData() {
             settings
         ] =
             await Promise.all([
-                PisadaBacanaDB.getOrders(),
-                PisadaBacanaDB.getSettings()
+                PisadaBacanaDB
+                    .getOrders(),
+
+                PisadaBacanaDB
+                    .getSettings()
             ]);
 
 
@@ -101,39 +99,61 @@ async function initializeFirebaseData() {
 
 
         /*
-            Suscripción a pedidos.
+            Tiempo real: pedidos.
         */
 
         unsubscribeOrders =
-            PisadaBacanaDB.subscribeOrders(
-                firestoreOrders => {
+            PisadaBacanaDB
+                .subscribeOrders(
+                    firestoreOrders => {
+                        window
+                            .PisadaBacanaData
+                            .orders =
+                            firestoreOrders;
 
-                    window.PisadaBacanaData.orders =
-                        firestoreOrders;
+                        emitOrdersUpdated(
+                            firestoreOrders
+                        );
+                    },
 
-                    dispatchOrdersUpdated(
-                        firestoreOrders
-                    );
-                }
-            );
+                    error => {
+                        console.error(
+                            "Error en listener de pedidos:",
+                            error
+                        );
+                    }
+                );
 
 
         /*
-            Suscripción a configuración.
+            Tiempo real: ajustes.
         */
 
         unsubscribeSettings =
-            PisadaBacanaDB.subscribeSettings(
-                firestoreSettings => {
+            PisadaBacanaDB
+                .subscribeSettings(
+                    firestoreSettings => {
+                        window
+                            .PisadaBacanaData
+                            .settings =
+                            firestoreSettings;
 
-                    window.PisadaBacanaData.settings =
-                        firestoreSettings;
+                        emitSettingsUpdated(
+                            firestoreSettings
+                        );
+                    },
 
-                    dispatchSettingsUpdated(
-                        firestoreSettings
-                    );
-                }
-            );
+                    error => {
+                        console.error(
+                            "Error en listener de ajustes:",
+                            error
+                        );
+                    }
+                );
+
+
+        initializationCompleted =
+            true;
 
 
         document.documentElement
@@ -146,6 +166,13 @@ async function initializeFirebaseData() {
                 "firestore-ready"
             );
 
+
+        /*
+            Evento principal.
+
+            Los scripts clásicos que estén esperando
+            Firebase pueden continuar desde aquí.
+        */
 
         window.dispatchEvent(
             new CustomEvent(
@@ -161,26 +188,29 @@ async function initializeFirebaseData() {
 
 
         /*
-            También notificamos los datos iniciales.
+            Emitimos también los valores iniciales
+            a los módulos que usan eventos específicos.
         */
 
-        dispatchOrdersUpdated(
+        emitOrdersUpdated(
             orders
         );
 
-        dispatchSettingsUpdated(
+        emitSettingsUpdated(
             settings
         );
 
 
         console.log(
-            `Firestore listo: ${orders.length} pedidos.`
+            `Pisada Bacana conectado a Firestore. ${orders.length} pedidos cargados.`
         );
 
     } catch (error) {
+        initializationCompleted =
+            false;
 
         console.error(
-            "Error inicializando Firestore:",
+            "No se pudo iniciar Firestore:",
             error
         );
 
@@ -215,12 +245,10 @@ async function initializeFirebaseData() {
 ===================================================== */
 
 function stopSubscriptions() {
-
     if (
         typeof unsubscribeOrders ===
         "function"
     ) {
-
         unsubscribeOrders();
 
         unsubscribeOrders =
@@ -232,7 +260,6 @@ function stopSubscriptions() {
         typeof unsubscribeSettings ===
         "function"
     ) {
-
         unsubscribeSettings();
 
         unsubscribeSettings =
@@ -248,7 +275,36 @@ window.addEventListener(
 
 
 /* =====================================================
+   API DE ESTADO
+===================================================== */
+
+window.PisadaBacanaFirebase = {
+    get ready() {
+        return initializationCompleted;
+    },
+
+    get orders() {
+        return (
+            window
+                .PisadaBacanaData
+                ?.orders ||
+            []
+        );
+    },
+
+    get settings() {
+        return (
+            window
+                .PisadaBacanaData
+                ?.settings ||
+            null
+        );
+    }
+};
+
+
+/* =====================================================
    INICIO
 ===================================================== */
 
-initializeFirebaseData();
+initializeFirestore();
