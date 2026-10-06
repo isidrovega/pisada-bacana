@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Clientes | Pisada Bacana</title>
+
+    <link rel="stylesheet" href="css/clientes.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">PB</div>
+
+            <div class="brand-text">
+                <strong>Pisada</strong>
+                <span>Bacana</span>
+            </div>
+        </div>
+
+        <p class="menu-title">MENÚ PRINCIPAL</p>
+
+        <nav class="navigation">
+
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">▦</span>
+                <span>Inicio</span>
+            </a>
+
+            <a href="pedidos.html" class="nav-item">
+                <span class="nav-icon">▣</span>
+                <span>Pedidos</span>
+
+                <span
+                    class="nav-counter"
+                    id="navOrderCount"
+                >
+                    0
+                </span>
+            </a>
+
+            <a href="clientes.html" class="nav-item active">
+                <span class="nav-icon">●</span>
+                <span>Clientes</span>
+            </a>
+
+            <a href="caja.html" class="nav-item">
+                <span class="nav-icon">$</span>
+                <span>Caja</span>
+            </a>
+
+            <a href="reportes.html" class="nav-item">
+                <span class="nav-icon">▥</span>
+                <span>Reportes</span>
+            </a>
+
+            <a href="ajustes.html" class="nav-item">
+                <span class="nav-icon">⚙</span>
+                <span>Ajustes</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="profile">
+
+                <div class="profile-avatar">
+                    A
+                </div>
+
+                <div>
+                    <strong>Administrador</strong>
+                    <span>Pisada Bacana</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                    class="menu-button"
+                    id="menuButton"
+                    aria-label="Abrir menú"
+                >
+                    ☰
+                </button>
+
+                <div>
+                    <h1>Clientes</h1>
+                    <p id="currentDate"></p>
+                </div>
+
+            </div>
+
+            <a
+                href="pedidos.html?nuevo=1"
+    class="primary-button"
+>
+    + Nuevo pedido
+            </a>
+
+        </header>
+
+
+        <div class="content">
+
+            <!-- HEADER -->
+            <section class="page-heading">
+
+                <div>
+                    <span class="eyebrow">
+                        CLIENTES
+                    </span>
+
+                    <h2>Base de clientes</h2>
+
+                    <p>
+                        Consulta clientes, historial y actividad registrada.
+                    </p>
+                </div>
+
+            </section>
+
+
+            <!-- STATS -->
+            <section class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-icon blue">
+                        ●
+                    </div>
+
+                    <div>
+                        <span>Total de clientes</span>
+
+                        <strong id="totalClients">
+                            0
+                        </strong>
+
+                        <small>
+                            Clientes únicos
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon purple">
+                        ▣
+                    </div>
+
+                    <div>
+                        <span>Con pedidos activos</span>
+
+                        <strong id="activeClients">
+                            0
+                        </strong>
+
+                        <small>
+                            Trabajo en proceso
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon green">
+                        ★
+                    </div>
+
+                    <div>
+                        <span>Clientes recurrentes</span>
+
+                        <strong id="repeatClients">
+                            0
+                        </strong>
+
+                        <small>
+                            Más de un pedido
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon red">
+                        $
+                    </div>
+
+                    <div>
+                        <span>Valor generado</span>
+
+                        <strong id="clientRevenue">
+                            $0
+                        </strong>
+
+                        <small>
+                            Total de pedidos
+                        </small>
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- PANEL -->
+            <section class="panel">
+
+                <div class="toolbar">
+
+                    <div class="search-box">
+
+                        <span>⌕</span>
+
+                        <input
+                            type="search"
+                            id="searchInput"
+                            placeholder="Buscar por nombre, teléfono o folio..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                    <select
+                        id="sortSelect"
+                        class="sort-select"
+                    >
+
+                        <option value="recent">
+                            Actividad reciente
+                        </option>
+
+                        <option value="name">
+                            Nombre A-Z
+                        </option>
+
+                        <option value="orders">
+                            Más pedidos
+                        </option>
+
+                        <option value="spent">
+                            Mayor gasto
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="filters" id="filters">
+
+                    <button
+                        class="filter-button active"
+                        data-filter="Todos"
+                    >
+                        Todos
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-filter="Activos"
+                    >
+                        Con pedidos activos
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-filter="Recurrentes"
+                    >
+                        Recurrentes
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-filter="Sin pendientes"
+                    >
+                        Sin saldo pendiente
+                    </button>
+
+                </div>
+
+
+                <div class="results-info">
+
+                    <div>
+                        <strong id="resultCount">
+                            0 clientes
+                        </strong>
+
+                        <span id="resultDescription">
+                            Mostrando todos los clientes
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Teléfono</th>
+                                <th>Pedidos</th>
+                                <th>Activos</th>
+                                <th>Último servicio</th>
+                                <th>Total gastado</th>
+                                <th>Saldo pendiente</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="clientsTable"></tbody>
+
+                    </table>
+
+
+                    <div
+                        class="empty-state"
+                        id="emptyState"
+                    >
+
+                        <div class="empty-logo">
+                            PB
+                        </div>
+
+                        <h3>
+                            No encontramos clientes
+                        </h3>
+
+                        <p>
+                            Los clientes aparecerán automáticamente al registrar pedidos.
+                        </p>
+
+                        <a
+                            href="pedidos.html"
+                            class="primary-button"
+                        >
+                            Ir a pedidos
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- OVERLAY -->
+<div
+    class="overlay"
+    id="overlay"
+></div>
+
+
+<!-- DRAWER -->
+<aside
+    class="drawer"
+    id="clientDrawer"
+>
+
+    <div class="drawer-header">
+
+        <div>
+            <span class="eyebrow">
+                DETALLE DEL CLIENTE
+            </span>
+
+            <h2 id="detailClientName">
+                Cliente
+            </h2>
+        </div>
+
+        <button
+            class="close-button"
+            id="closeDrawerButton"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <div class="drawer-content">
+
+        <section class="detail-section">
+
+            <span class="detail-label">
+                CONTACTO
+            </span>
+
+            <h3 id="detailPhone">
+                Sin teléfono
+            </h3>
+
+            <p id="detailClientSince">
+                Cliente registrado
+            </p>
+
+        </section>
+
+
+        <section class="detail-section">
+
+            <span class="detail-label">
+                RESUMEN
+            </span>
+
+            <div class="client-summary-grid">
+
+                <div>
+                    <span>Pedidos</span>
+                    <strong id="detailOrdersCount">0</strong>
+                </div>
+
+                <div>
+                    <span>Activos</span>
+                    <strong id="detailActiveOrders">0</strong>
+                </div>
+
+                <div>
+                    <span>Gastado</span>
+                    <strong id="detailSpent">$0</strong>
+                </div>
+
+                <div>
+                    <span>Pendiente</span>
+                    <strong id="detailPending">$0</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="detail-section">
+
+            <span class="detail-label">
+                HISTORIAL DE PEDIDOS
+            </span>
+
+            <div
+                class="history-list"
+                id="historyList"
+            ></div>
+
+        </section>
+
+    </div>
+
+
+    <div class="drawer-footer">
+
+        <a
+            href="pedidos.html"
+            class="primary-button"
+        >
+            Ver pedidos
+        </a>
+
+    </div>
+
+</aside>
+
+
+<!-- TOAST -->
+<div
+    class="toast"
+    id="toast"
+>
+
+    <div class="toast-icon">
+        ✓
+    </div>
+
+    <div>
+        <strong>
+            Listo
+        </strong>
+
+        <span id="toastMessage"></span>
+    </div>
+
+</div>
+
+
+<script src="js/clientes.js"></script>
+
+</body>
+</html>

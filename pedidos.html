@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pedidos | Pisada Bacana</title>
+
+    <link rel="stylesheet" href="css/pedidos.css">
+    <link rel="stylesheet" href="css/nota.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">PB</div>
+
+            <div class="brand-text">
+                <strong>Pisada</strong>
+                <span>Bacana</span>
+            </div>
+        </div>
+
+        <p class="menu-title">MENÚ PRINCIPAL</p>
+
+        <nav class="navigation">
+
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">▦</span>
+                <span>Inicio</span>
+            </a>
+
+            <a href="pedidos.html" class="nav-item active">
+                <span class="nav-icon">▣</span>
+                <span>Pedidos</span>
+                <span class="nav-counter" id="navOrderCount">0</span>
+            </a>
+
+            <a href="clientes.html" class="nav-item">
+                <span class="nav-icon">●</span>
+                <span>Clientes</span>
+            </a>
+
+            <a href="caja.html" class="nav-item">
+                <span class="nav-icon">$</span>
+                <span>Caja</span>
+            </a>
+
+            <a href="reportes.html" class="nav-item">
+                <span class="nav-icon">▥</span>
+                <span>Reportes</span>
+            </a>
+
+            <a href="ajustes.html" class="nav-item">
+                <span class="nav-icon">⚙</span>
+                <span>Ajustes</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="profile">
+
+                <div class="profile-avatar">A</div>
+
+                <div>
+                    <strong>Administrador</strong>
+                    <span>Pisada Bacana</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                    class="menu-button"
+                    id="menuButton"
+                    type="button"
+                    aria-label="Abrir menú"
+                >
+                    ☰
+                </button>
+
+                <div>
+                    <h1>Pedidos</h1>
+                    <p id="currentDate"></p>
+                </div>
+
+            </div>
+
+            <button
+                class="primary-button"
+                id="newOrderButton"
+                type="button"
+            >
+                + Nuevo pedido
+            </button>
+
+        </header>
+
+
+        <div class="content">
+
+            <!-- HEADER -->
+            <section class="page-heading">
+
+                <div>
+                    <span class="eyebrow">PEDIDOS</span>
+                    <h2>Control de pedidos</h2>
+
+                    <p>
+                        Administra los artículos, pagos y avance de cada pedido.
+                    </p>
+                </div>
+
+            </section>
+
+
+            <!-- ESTADÍSTICAS -->
+            <section class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-icon blue">▣</div>
+
+                    <div>
+                        <span>Pedidos activos</span>
+                        <strong id="activeOrdersCount">0</strong>
+                        <small>Sin entregar</small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon purple">↻</div>
+
+                    <div>
+                        <span>En proceso</span>
+                        <strong id="processOrdersCount">0</strong>
+                        <small>Lavando o secando</small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon green">✓</div>
+
+                    <div>
+                        <span>Listos</span>
+                        <strong id="readyOrdersCount">0</strong>
+                        <small>Esperando entrega</small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon red">$</div>
+
+                    <div>
+                        <span>Saldo pendiente</span>
+                        <strong id="pendingBalance">$0</strong>
+                        <small>Pedidos activos</small>
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- FILTROS -->
+            <section class="orders-panel">
+
+                <div class="filters">
+
+                    <div class="search-box">
+                        <span>⌕</span>
+
+                        <input
+                            type="search"
+                            id="searchInput"
+                            placeholder="Buscar folio, cliente, teléfono, artículo..."
+                            autocomplete="off"
+                        >
+                    </div>
+
+
+                    <select
+                        id="sortSelect"
+                        class="sort-select"
+                    >
+                        <option value="newest">
+                            Más recientes
+                        </option>
+
+                        <option value="oldest">
+                            Más antiguos
+                        </option>
+
+                        <option value="delivery">
+                            Próxima entrega
+                        </option>
+
+                        <option value="price">
+                            Mayor precio
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="status-filters">
+
+                    <button
+                        class="filter-button active"
+                        data-status="Todos"
+                        type="button"
+                    >
+                        Todos
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-status="Recibido"
+                        type="button"
+                    >
+                        Recibidos
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-status="En espera"
+                        type="button"
+                    >
+                        En espera
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-status="Lavando"
+                        type="button"
+                    >
+                        Lavando
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-status="Secando"
+                        type="button"
+                    >
+                        Secando
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-status="Listo"
+                        type="button"
+                    >
+                        Listos
+                    </button>
+
+                    <button
+                        class="filter-button"
+                        data-status="Entregado"
+                        type="button"
+                    >
+                        Entregados
+                    </button>
+
+                </div>
+
+
+                <!-- TABLA -->
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Cliente</th>
+                                <th>Artículos</th>
+                                <th>Estado</th>
+                                <th>Pago</th>
+                                <th>Entrega</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="ordersTableBody"></tbody>
+
+                    </table>
+
+
+                    <div
+                        class="empty-state"
+                        id="emptyState"
+                    >
+                        <div class="empty-icon">▣</div>
+
+                        <h3>No encontramos pedidos</h3>
+
+                        <p>
+                            Crea un nuevo pedido o cambia los filtros.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- OVERLAY -->
+<div
+    class="overlay"
+    id="overlay"
+></div>
+
+
+<!-- =====================================================
+     MODAL NUEVO PEDIDO
+====================================================== -->
+<div
+    class="modal order-modal"
+    id="orderModal"
+    role="dialog"
+    aria-modal="true"
+>
+
+    <div class="modal-header">
+
+        <div>
+            <span class="eyebrow">NUEVO PEDIDO</span>
+            <h3>Registrar pedido</h3>
+
+            <p>
+                Un mismo pedido puede contener varios artículos.
+            </p>
+        </div>
+
+        <button
+            class="modal-close"
+            id="closeOrderModalButton"
+            type="button"
+            aria-label="Cerrar"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <form
+        id="orderForm"
+        class="modal-content"
+    >
+
+        <!-- CLIENTE -->
+        <section class="form-section">
+
+            <div class="form-section-heading">
+
+                <div class="section-number">1</div>
+
+                <div>
+                    <h4>Cliente</h4>
+                    <p>Información de contacto.</p>
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="clientName">
+                        Nombre *
+                    </label>
+
+                    <input
+                        id="clientName"
+                        type="text"
+                        required
+                        maxlength="100"
+                        placeholder="Nombre del cliente"
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="clientPhone">
+                        Teléfono *
+                    </label>
+
+                    <input
+                        id="clientPhone"
+                        type="tel"
+                        required
+                        maxlength="30"
+                        placeholder="667 123 4567"
+                    >
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ARTÍCULOS -->
+        <section class="form-section">
+
+            <div class="items-section-header">
+
+                <div class="form-section-heading">
+
+                    <div class="section-number">2</div>
+
+                    <div>
+                        <h4>Artículos del pedido</h4>
+
+                        <p>
+                            Agrega todos los tenis o gorras que recibes.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <span
+                    class="items-counter"
+                    id="itemsCounter"
+                >
+                    1 artículo
+                </span>
+
+            </div>
+
+
+            <div
+                class="order-items"
+                id="orderItems"
+            ></div>
+
+
+            <button
+                class="add-item-button"
+                id="addItemButton"
+                type="button"
+            >
+                <span>+</span>
+
+                Agregar otro artículo
+            </button>
+
+        </section>
+
+
+        <!-- PAGO -->
+        <section class="form-section">
+
+            <div class="form-section-heading">
+
+                <div class="section-number">3</div>
+
+                <div>
+                    <h4>Pago</h4>
+
+                    <p>
+                        El total se calcula con los artículos.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="order-total-box">
+
+                <div>
+                    <span>Artículos</span>
+                    <strong id="summaryItemsCount">1</strong>
+                </div>
+
+                <div>
+                    <span>Total del pedido</span>
+                    <strong id="orderTotalPreview">$0</strong>
+                </div>
+
+                <div>
+                    <span>Anticipo</span>
+                    <strong id="advancePreview">$0</strong>
+                </div>
+
+                <div class="balance">
+                    <span>Saldo pendiente</span>
+                    <strong id="balancePreview">$0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="orderAdvance">
+                        Anticipo
+                    </label>
+
+                    <input
+                        id="orderAdvance"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                    >
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="paymentMethod">
+                        Método de pago
+                    </label>
+
+                    <select id="paymentMethod">
+                        <option value="Efectivo">
+                            Efectivo
+                        </option>
+
+                        <option value="Transferencia">
+                            Transferencia
+                        </option>
+
+                        <option value="Tarjeta">
+                            Tarjeta
+                        </option>
+                    </select>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- PEDIDO -->
+        <section class="form-section">
+
+            <div class="form-section-heading">
+
+                <div class="section-number">4</div>
+
+                <div>
+                    <h4>Entrega y seguimiento</h4>
+
+                    <p>
+                        Información general del pedido.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label for="orderStatus">
+                        Estado inicial
+                    </label>
+
+                    <select id="orderStatus">
+
+                        <option value="Recibido">
+                            Recibido
+                        </option>
+
+                        <option value="En espera">
+                            En espera
+                        </option>
+
+                        <option value="Lavando">
+                            Lavando
+                        </option>
+
+                        <option value="Secando">
+                            Secando
+                        </option>
+
+                        <option value="Listo">
+                            Listo
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="deliveryDate">
+                        Fecha de entrega
+                    </label>
+
+                    <input
+                        id="deliveryDate"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label for="orderNotes">
+                        Observaciones
+                    </label>
+
+                    <textarea
+                        id="orderNotes"
+                        rows="3"
+                        maxlength="500"
+                        placeholder="Detalles generales, manchas, daños, indicaciones..."
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <div class="modal-footer">
+
+            <button
+                class="secondary-button"
+                id="cancelOrderButton"
+                type="button"
+            >
+                Cancelar
+            </button>
+
+            <button
+                class="primary-button"
+                type="submit"
+            >
+                Crear pedido
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =====================================================
+     DRAWER DETALLE
+====================================================== -->
+<aside
+    class="drawer"
+    id="orderDrawer"
+>
+
+    <div class="drawer-header">
+
+        <div>
+            <span class="eyebrow">DETALLE DEL PEDIDO</span>
+
+            <h3 id="detailOrderCode">
+                PB-0000
+            </h3>
+        </div>
+
+        <button
+            class="modal-close"
+            id="closeDrawerButton"
+            type="button"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <div class="drawer-content">
+
+        <!-- CLIENTE -->
+        <section class="detail-section">
+
+            <span class="detail-label">
+                Cliente
+            </span>
+
+            <h4 id="detailClientName">
+                -
+            </h4>
+
+            <p id="detailClientPhone">
+                -
+            </p>
+
+        </section>
+
+
+        <!-- ARTÍCULOS -->
+        <section class="detail-section">
+
+            <div class="detail-section-title">
+
+                <span class="detail-label">
+                    Artículos
+                </span>
+
+                <span
+                    class="detail-count"
+                    id="detailItemsCount"
+                >
+                    0
+                </span>
+
+            </div>
+
+
+            <div
+                class="detail-items"
+                id="detailItems"
+            ></div>
+
+        </section>
+
+
+        <!-- OBSERVACIONES -->
+        <section class="detail-section">
+
+            <span class="detail-label">
+                Observaciones
+            </span>
+
+            <p
+                class="detail-notes"
+                id="detailNotes"
+            >
+                Sin observaciones.
+            </p>
+
+        </section>
+
+
+        <!-- ESTADO -->
+        <section class="detail-section">
+
+            <div class="form-group">
+
+                <label for="detailStatus">
+                    Estado del pedido
+                </label>
+
+                <select id="detailStatus">
+
+                    <option value="Recibido">
+                        Recibido
+                    </option>
+
+                    <option value="En espera">
+                        En espera
+                    </option>
+
+                    <option value="Lavando">
+                        Lavando
+                    </option>
+
+                    <option value="Secando">
+                        Secando
+                    </option>
+
+                    <option value="Listo">
+                        Listo
+                    </option>
+
+                    <option value="Entregado">
+                        Entregado
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div
+                class="progress-steps"
+                id="progressSteps"
+            ></div>
+
+        </section>
+
+
+        <!-- PAGO -->
+        <section class="detail-section">
+
+            <span class="detail-label">
+                Pago
+            </span>
+
+
+            <div class="payment-summary">
+
+                <div>
+                    <span>Total</span>
+                    <strong id="detailTotal">$0</strong>
+                </div>
+
+                <div>
+                    <span>Pagado</span>
+                    <strong id="detailPaid">$0</strong>
+                </div>
+
+                <div>
+                    <span>Pendiente</span>
+                    <strong id="detailBalance">$0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="payment-register">
+
+                <div class="form-group">
+
+                    <label for="paymentAmount">
+                        Registrar pago
+                    </label>
+
+                    <input
+                        id="paymentAmount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                    >
+
+                </div>
+
+                <button
+                    class="secondary-button"
+                    id="registerPaymentButton"
+                    type="button"
+                >
+                    Registrar
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- ENTREGA -->
+        <section class="detail-section">
+
+            <div class="form-group">
+
+                <label for="detailDeliveryDate">
+                    Fecha de entrega
+                </label>
+
+                <input
+                    id="detailDeliveryDate"
+                    type="date"
+                >
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <div class="drawer-footer">
+
+        <button
+            class="danger-outline-button"
+            id="deleteOrderButton"
+            type="button"
+        >
+            Eliminar
+        </button>
+
+        <button
+            class="primary-button"
+            id="saveOrderChangesButton"
+            type="button"
+        >
+            Guardar cambios
+        </button>
+
+    </div>
+
+</aside>
+
+
+<!-- TOAST -->
+<div
+    class="toast"
+    id="toast"
+>
+    <div class="toast-dot"></div>
+    <span id="toastMessage"></span>
+</div>
+
+
+<script src="js/pedidos.js"></script>
+<script src="js/nota.js"></script>
+
+</body>
+</html>

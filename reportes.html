@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reportes | Pisada Bacana</title>
+
+    <link rel="stylesheet" href="css/reportes.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">PB</div>
+
+            <div class="brand-text">
+                <strong>Pisada</strong>
+                <span>Bacana</span>
+            </div>
+        </div>
+
+        <p class="menu-title">
+            MENÚ PRINCIPAL
+        </p>
+
+        <nav class="navigation">
+
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">▦</span>
+                <span>Inicio</span>
+            </a>
+
+            <a href="pedidos.html" class="nav-item">
+                <span class="nav-icon">▣</span>
+                <span>Pedidos</span>
+
+                <span
+                    class="nav-counter"
+                    id="navOrderCount"
+                >
+                    0
+                </span>
+            </a>
+
+            <a href="clientes.html" class="nav-item">
+                <span class="nav-icon">●</span>
+                <span>Clientes</span>
+            </a>
+
+            <a href="caja.html" class="nav-item">
+                <span class="nav-icon">$</span>
+                <span>Caja</span>
+            </a>
+
+            <a href="reportes.html" class="nav-item active">
+                <span class="nav-icon">▥</span>
+                <span>Reportes</span>
+            </a>
+
+            <a href="ajustes.html" class="nav-item">
+                <span class="nav-icon">⚙</span>
+                <span>Ajustes</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="profile">
+
+                <div class="profile-avatar">
+                    A
+                </div>
+
+                <div>
+                    <strong>Administrador</strong>
+                    <span>Pisada Bacana</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                    class="menu-button"
+                    id="menuButton"
+                    aria-label="Abrir menú"
+                >
+                    ☰
+                </button>
+
+                <div>
+                    <h1>Reportes</h1>
+                    <p id="currentDate"></p>
+                </div>
+
+            </div>
+
+            <button
+                class="primary-button"
+                id="printReportButton"
+                type="button"
+            >
+                Imprimir reporte
+            </button>
+
+        </header>
+
+
+        <div class="content">
+
+            <!-- ENCABEZADO -->
+            <section class="report-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        ANÁLISIS
+                    </span>
+
+                    <h2>
+                        Rendimiento del negocio
+                    </h2>
+
+                    <p>
+                        Analiza pedidos, ingresos, servicios y clientes.
+                    </p>
+
+                </div>
+
+
+                <div class="period-control">
+
+                    <label for="periodFilter">
+                        Periodo
+                    </label>
+
+                    <select id="periodFilter">
+
+                        <option value="all">
+                            Todo el historial
+                        </option>
+
+                        <option value="today">
+                            Hoy
+                        </option>
+
+                        <option value="week">
+                            Últimos 7 días
+                        </option>
+
+                        <option value="month" selected>
+                            Este mes
+                        </option>
+
+                        <option value="year">
+                            Este año
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </section>
+
+
+            <!-- MÉTRICAS -->
+            <section class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-icon blue">
+                        $
+                    </div>
+
+                    <div class="stat-data">
+
+                        <span>
+                            Valor generado
+                        </span>
+
+                        <strong id="totalSales">
+                            $0
+                        </strong>
+
+                        <small id="salesDescription">
+                            Pedidos del periodo
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon green">
+                        ↓
+                    </div>
+
+                    <div class="stat-data">
+
+                        <span>
+                            Cobrado
+                        </span>
+
+                        <strong id="totalCollected">
+                            $0
+                        </strong>
+
+                        <small id="collectionPercentage">
+                            0% cobrado
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon red">
+                        !
+                    </div>
+
+                    <div class="stat-data">
+
+                        <span>
+                            Saldo pendiente
+                        </span>
+
+                        <strong id="totalPending">
+                            $0
+                        </strong>
+
+                        <small id="pendingDescription">
+                            0 pedidos pendientes
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon purple">
+                        ▣
+                    </div>
+
+                    <div class="stat-data">
+
+                        <span>
+                            Pedidos
+                        </span>
+
+                        <strong id="totalOrders">
+                            0
+                        </strong>
+
+                        <small id="deliveredDescription">
+                            0 entregados
+                        </small>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- GRÁFICA + ESTADOS -->
+            <section class="report-grid">
+
+                <article class="panel chart-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                INGRESOS
+                            </span>
+
+                            <h3>
+                                Valor generado
+                            </h3>
+
+                            <p id="chartSubtitle">
+                                Comportamiento del periodo
+                            </p>
+                        </div>
+
+                        <strong
+                            class="panel-total"
+                            id="chartTotal"
+                        >
+                            $0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="chart-container">
+
+                        <div
+                            class="bar-chart"
+                            id="revenueChart"
+                        ></div>
+
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                OPERACIÓN
+                            </span>
+
+                            <h3>
+                                Estado de pedidos
+                            </h3>
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="status-report"
+                        id="statusReport"
+                    ></div>
+
+                </article>
+
+            </section>
+
+
+            <!-- SERVICIOS + CLIENTES -->
+            <section class="report-grid">
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                SERVICIOS
+                            </span>
+
+                            <h3>
+                                Más solicitados
+                            </h3>
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="ranking-list"
+                        id="servicesRanking"
+                    ></div>
+
+
+                    <div
+                        class="panel-empty"
+                        id="servicesEmpty"
+                    >
+                        No hay servicios registrados en este periodo.
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                CLIENTES
+                            </span>
+
+                            <h3>
+                                Clientes destacados
+                            </h3>
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="ranking-list"
+                        id="clientsRanking"
+                    ></div>
+
+
+                    <div
+                        class="panel-empty"
+                        id="clientsEmpty"
+                    >
+                        No hay clientes registrados en este periodo.
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- PRODUCTOS + RESUMEN -->
+            <section class="report-grid">
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                ARTÍCULOS
+                            </span>
+
+                            <h3>
+                                Tipo de producto
+                            </h3>
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-report">
+
+                        <div class="product-card">
+
+                            <div class="product-icon blue">
+                                T
+                            </div>
+
+                            <div>
+                                <span>Tenis</span>
+
+                                <strong id="shoesCount">
+                                    0
+                                </strong>
+
+                                <small id="shoesPercentage">
+                                    0% del total
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="product-card">
+
+                            <div class="product-icon red">
+                                G
+                            </div>
+
+                            <div>
+                                <span>Gorras</span>
+
+                                <strong id="capsCount">
+                                    0
+                                </strong>
+
+                                <small id="capsPercentage">
+                                    0% del total
+                                </small>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                RESUMEN
+                            </span>
+
+                            <h3>
+                                Indicadores
+                            </h3>
+                        </div>
+
+                    </div>
+
+
+                    <div class="summary-list">
+
+                        <div class="summary-row">
+                            <span>Ticket promedio</span>
+                            <strong id="averageTicket">$0</strong>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Clientes únicos</span>
+                            <strong id="uniqueClients">0</strong>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Clientes recurrentes</span>
+                            <strong id="repeatClients">0</strong>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Pedidos entregados</span>
+                            <strong id="deliveredOrders">0</strong>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Pedidos activos</span>
+                            <strong id="activeOrders">0</strong>
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- TABLA -->
+            <section class="panel orders-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <span class="eyebrow">
+                            DETALLE
+                        </span>
+
+                        <h3>
+                            Pedidos del periodo
+                        </h3>
+                    </div>
+
+                    <span
+                        class="order-count-label"
+                        id="tableOrderCount"
+                    >
+                        0 pedidos
+                    </span>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Cliente</th>
+                                <th>Artículo</th>
+                                <th>Servicio</th>
+                                <th>Estado</th>
+                                <th>Precio</th>
+                                <th>Saldo</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="ordersTable"></tbody>
+
+                    </table>
+
+
+                    <div
+                        class="table-empty"
+                        id="tableEmpty"
+                    >
+                        <div class="empty-icon">
+                            ▥
+                        </div>
+
+                        <h3>
+                            Sin información
+                        </h3>
+
+                        <p>
+                            No hay pedidos registrados para el periodo seleccionado.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- OVERLAY MÓVIL -->
+<div
+    class="overlay"
+    id="overlay"
+></div>
+
+
+<script src="js/reportes.js"></script>
+
+</body>
+</html>

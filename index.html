@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pisada Bacana | Panel Administrativo</title>
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="app">
+
+    <aside class="sidebar" id="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">PB</div>
+
+            <div class="brand-text">
+                <strong>Pisada</strong>
+                <span>Bacana</span>
+            </div>
+        </div>
+
+        <p class="menu-title">MENÚ PRINCIPAL</p>
+
+        <nav class="navigation">
+
+            <a href="index.html" class="nav-item active">
+                <span class="nav-icon">▦</span>
+                <span>Inicio</span>
+            </a>
+
+            <a href="pedidos.html" class="nav-item">
+                <span class="nav-icon">▣</span>
+                <span>Pedidos</span>
+
+                <span
+                    class="nav-counter"
+                    id="navOrderCount"
+                >
+                    0
+                </span>
+            </a>
+
+            <a href="clientes.html" class="nav-item">
+                <span class="nav-icon">●</span>
+                <span>Clientes</span>
+            </a>
+
+            <a href="caja.html" class="nav-item">
+                <span class="nav-icon">$</span>
+                <span>Caja</span>
+            </a>
+
+            <a href="reportes.html" class="nav-item">
+                <span class="nav-icon">▥</span>
+                <span>Reportes</span>
+            </a>
+
+            <a href="ajustes.html" class="nav-item">
+                <span class="nav-icon">⚙</span>
+                <span>Ajustes</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="profile">
+                <div class="profile-avatar">A</div>
+
+                <div>
+                    <strong>Administrador</strong>
+                    <span>Pisada Bacana</span>
+                </div>
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                    class="menu-button"
+                    id="menuButton"
+                    aria-label="Abrir menú"
+                >
+                    ☰
+                </button>
+
+                <div>
+                    <h1>Panel General</h1>
+                    <p id="currentDate"></p>
+                </div>
+
+            </div>
+
+            <a
+    href="pedidos.html?nuevo=1"
+    class="primary-button"
+    id="newOrderButton"
+>
+    + Nuevo pedido
+</a>
+
+        </header>
+
+
+        <div class="content">
+
+            <section class="page-heading">
+
+                <div>
+                    <span class="eyebrow">RESUMEN</span>
+
+                    <h2>Así va Pisada Bacana</h2>
+
+                    <p>
+                        Consulta rápidamente los pedidos y movimientos del negocio.
+                    </p>
+                </div>
+
+            </section>
+
+
+            <section class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-icon blue">
+                        ▣
+                    </div>
+
+                    <div>
+                        <span>Pedidos activos</span>
+
+                        <strong id="activeOrders">
+                            0
+                        </strong>
+
+                        <small>
+                            Sin entregar
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon red">
+                        ◷
+                    </div>
+
+                    <div>
+                        <span>En proceso</span>
+
+                        <strong id="processOrders">
+                            0
+                        </strong>
+
+                        <small>
+                            Lavando / secando
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon green">
+                        ✓
+                    </div>
+
+                    <div>
+                        <span>Listos</span>
+
+                        <strong id="readyOrders">
+                            0
+                        </strong>
+
+                        <small>
+                            Para entregar
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon orange">
+                        $
+                    </div>
+
+                    <div>
+                        <span>Anticipos registrados</span>
+
+                        <strong id="totalIncome">
+                            $0
+                        </strong>
+
+                        <small>
+                            Acumulado
+                        </small>
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <section class="dashboard-grid">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                ACTIVIDAD
+                            </span>
+
+                            <h3>
+                                Pedidos recientes
+                            </h3>
+                        </div>
+
+                        <a
+                            href="pedidos.html"
+                            class="text-link"
+                        >
+                            Ver todos →
+                        </a>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Cliente</th>
+                                <th>Artículo</th>
+                                <th>Estado</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="ordersTable"></tbody>
+
+                        </table>
+
+
+                        <div
+                            class="empty-state"
+                            id="emptyState"
+                        >
+
+                            <div class="empty-logo">
+                                PB
+                            </div>
+
+                            <h3>
+                                No hay pedidos
+                            </h3>
+
+                            <p>
+                                Registra el primer pedido del negocio.
+                            </p>
+
+                            <a
+    href="pedidos.html?nuevo=1"
+    class="primary-button"
+    id="newOrderButton"
+>
+    + Nuevo pedido
+</a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <aside class="panel summary-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <span class="eyebrow">
+                                RESUMEN
+                            </span>
+
+                            <h3>
+                                Estados
+                            </h3>
+                        </div>
+                    </div>
+
+
+                    <div class="summary-row">
+                        <span>
+                            <i class="dot blue"></i>
+                            Recibidos
+                        </span>
+
+                        <strong id="receivedCount">
+                            0
+                        </strong>
+                    </div>
+
+
+                    <div class="summary-row">
+                        <span>
+                            <i class="dot red"></i>
+                            En proceso
+                        </span>
+
+                        <strong id="summaryProcess">
+                            0
+                        </strong>
+                    </div>
+
+
+                    <div class="summary-row">
+                        <span>
+                            <i class="dot green"></i>
+                            Listos
+                        </span>
+
+                        <strong id="summaryReady">
+                            0
+                        </strong>
+                    </div>
+
+
+                    <div class="next-delivery">
+
+                        <span>
+                            PRÓXIMA ENTREGA
+                        </span>
+
+                        <strong id="nextDelivery">
+                            Sin entregas
+                        </strong>
+
+                        <p id="nextDeliveryClient">
+                            No hay entregas próximas.
+                        </p>
+
+                    </div>
+
+                </aside>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<div
+    class="overlay"
+    id="overlay"
+></div>
+
+
+<div
+    class="modal"
+    id="orderModal"
+>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <div>
+                <span class="eyebrow">
+                    PISADA BACANA
+                </span>
+
+                <h2>
+                    Nuevo pedido
+                </h2>
+
+                <p>
+                    Registra un nuevo trabajo.
+                </p>
+            </div>
+
+            <button
+                class="close-button"
+                id="closeModalButton"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="orderForm">
+
+            <section class="form-section">
+
+                <div class="form-title">
+                    <span>01</span>
+
+                    <div>
+                        <h3>Cliente</h3>
+                        <p>Información de contacto</p>
+                    </div>
+                </div>
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="clientName">
+                            Nombre *
+                        </label>
+
+                        <input
+                            id="clientName"
+                            name="clientName"
+                            type="text"
+                            placeholder="Ej. Juan Pérez"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="phone">
+                            Teléfono *
+                        </label>
+
+                        <input
+                            id="phone"
+                            name="phone"
+                            type="tel"
+                            placeholder="667 123 4567"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="form-section">
+
+                <div class="form-title">
+                    <span>02</span>
+
+                    <div>
+                        <h3>Artículo</h3>
+                        <p>Información del trabajo</p>
+                    </div>
+                </div>
+
+
+                <div class="type-selector">
+
+                    <label>
+
+                        <input
+                            type="radio"
+                            name="itemType"
+                            value="Tenis"
+                            checked
+                        >
+
+                        <span>
+                            <strong>Tenis</strong>
+                            <small>Calzado</small>
+                        </span>
+
+                    </label>
+
+
+                    <label>
+
+                        <input
+                            type="radio"
+                            name="itemType"
+                            value="Gorra"
+                        >
+
+                        <span>
+                            <strong>Gorra</strong>
+                            <small>Gorras y viseras</small>
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+                <div class="form-grid three">
+
+                    <div class="form-group">
+                        <label for="brand">Marca</label>
+
+                        <input
+                            id="brand"
+                            name="brand"
+                            type="text"
+                            placeholder="Nike"
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="model">Modelo</label>
+
+                        <input
+                            id="model"
+                            name="model"
+                            type="text"
+                            placeholder="Air Force 1"
+                        >
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="color">Color</label>
+
+                        <input
+                            id="color"
+                            name="color"
+                            type="text"
+                            placeholder="Blanco"
+                        >
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="service">
+                            Servicio *
+                        </label>
+
+                        <select
+                            id="service"
+                            name="service"
+                            required
+                        >
+                            <option value="Limpieza básica">
+                                Limpieza básica
+                            </option>
+
+                            <option value="Limpieza profunda">
+                                Limpieza profunda
+                            </option>
+
+                            <option value="Limpieza premium">
+                                Limpieza premium
+                            </option>
+
+                            <option value="Restauración">
+                                Restauración
+                            </option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="status">
+                            Estado *
+                        </label>
+
+                        <select
+                            id="status"
+                            name="status"
+                            required
+                        >
+                            <option value="Recibido">
+                                Recibido
+                            </option>
+
+                            <option value="En espera">
+                                En espera
+                            </option>
+
+                            <option value="Lavando">
+                                Lavando
+                            </option>
+
+                            <option value="Secando">
+                                Secando
+                            </option>
+
+                            <option value="Listo">
+                                Listo
+                            </option>
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="form-section">
+
+                <div class="form-title">
+                    <span>03</span>
+
+                    <div>
+                        <h3>Pago y entrega</h3>
+                        <p>Costos y fecha prevista</p>
+                    </div>
+                </div>
+
+
+                <div class="form-grid three">
+
+                    <div class="form-group">
+
+                        <label for="price">
+                            Total *
+                        </label>
+
+                        <input
+                            id="price"
+                            name="price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="advance">
+                            Anticipo
+                        </label>
+
+                        <input
+                            id="advance"
+                            name="advance"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Pendiente
+                        </label>
+
+                        <div class="balance-box">
+                            $<span id="balancePreview">0.00</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="deliveryDate">
+                            Fecha de entrega *
+                        </label>
+
+                        <input
+                            id="deliveryDate"
+                            name="deliveryDate"
+                            type="date"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="paymentMethod">
+                            Método de pago
+                        </label>
+
+                        <select
+                            id="paymentMethod"
+                            name="paymentMethod"
+                        >
+                            <option value="Efectivo">
+                                Efectivo
+                            </option>
+
+                            <option value="Transferencia">
+                                Transferencia
+                            </option>
+
+                            <option value="Tarjeta">
+                                Tarjeta
+                            </option>
+
+                            <option value="Pendiente">
+                                Pendiente
+                            </option>
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="notes">
+                        Observaciones
+                    </label>
+
+                    <textarea
+                        id="notes"
+                        name="notes"
+                        rows="4"
+                        placeholder="Detalles del artículo..."
+                    ></textarea>
+
+                </div>
+
+            </section>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="cancelOrderButton"
+                >
+                    Cancelar
+                </button>
+
+                <a
+    href="pedidos.html?nuevo=1"
+    class="primary-button"
+    id="newOrderButton"
+>
+    + Nuevo pedido
+</a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div
+    class="toast"
+    id="toast"
+>
+
+    <div class="toast-icon">
+        ✓
+    </div>
+
+    <div>
+        <strong>
+            Pedido registrado
+        </strong>
+
+        <span id="toastMessage"></span>
+    </div>
+
+</div>
+
+
+<script src="js/app.js"></script>
+
+</body>
+</html>

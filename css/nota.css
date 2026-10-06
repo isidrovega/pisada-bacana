@@ -1,0 +1,1173 @@
+/* =====================================================
+   PISADA BACANA
+   NOTA / COMPROBANTE DE SERVICIO
+===================================================== */
+
+
+/* =====================================================
+   AISLAMIENTO DE ESTILOS
+
+   Evita que estilos globales de pedidos.css,
+   como table { min-width: 900px; },
+   alteren la nota.
+===================================================== */
+
+#serviceNote,
+#serviceNote *,
+.note-modal,
+.note-modal * {
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+.note-modal {
+    position: fixed;
+    inset: 18px;
+
+    width: min(1040px, calc(100% - 36px));
+    height: calc(100vh - 36px);
+
+    margin: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    visibility: hidden;
+    opacity: 0;
+
+    border-radius: 18px;
+
+    background: #eef1f6;
+
+    box-shadow:
+        0 30px 90px rgba(4, 14, 34, 0.3);
+
+    transform: translateY(12px) scale(0.99);
+
+    z-index: 500;
+
+    transition:
+        opacity 0.2s ease,
+        visibility 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.note-modal.visible {
+    visibility: visible;
+    opacity: 1;
+
+    transform: translateY(0) scale(1);
+}
+
+
+/* =====================================================
+   BARRA SUPERIOR
+===================================================== */
+
+.note-toolbar {
+    min-height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    flex-shrink: 0;
+
+    padding: 14px 20px;
+
+    border-bottom: 1px solid #dfe4eb;
+
+    background: #ffffff;
+
+    border-radius: 18px 18px 0 0;
+}
+
+
+.note-toolbar-title {
+    min-width: 0;
+}
+
+
+.note-toolbar-title span {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #1757d7;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 1.4px;
+}
+
+
+.note-toolbar-title strong {
+    display: block;
+
+    overflow: hidden;
+
+    color: #172033;
+
+    font-size: 14px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.note-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    flex-shrink: 0;
+}
+
+
+.note-toolbar-button {
+    min-height: 40px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 0 15px;
+
+    border: 1px solid #e2e6ec;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #172033;
+
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.note-toolbar-button:hover {
+    background: #f5f7fa;
+}
+
+
+.note-toolbar-button.primary {
+    border-color: #1757d7;
+
+    background: #1757d7;
+    color: #ffffff;
+}
+
+
+.note-toolbar-button.primary:hover {
+    border-color: #104bc1;
+
+    background: #104bc1;
+}
+
+
+.note-toolbar-close {
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    flex-shrink: 0;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 10px;
+
+    background: #f1f3f6;
+    color: #172033;
+
+    font-family: inherit;
+    font-size: 20px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.note-toolbar-close:hover {
+    background: #e5e8ed;
+    color: #ed3045;
+}
+
+
+/* =====================================================
+   ÁREA DE PREVISUALIZACIÓN
+===================================================== */
+
+.note-preview-area {
+    flex: 1;
+
+    min-width: 0;
+    min-height: 0;
+
+    overflow: auto;
+
+    padding: 30px;
+
+    background: #e9edf3;
+}
+
+
+/* =====================================================
+   HOJA A4
+===================================================== */
+
+.service-note {
+    width: 210mm;
+    max-width: 100%;
+    min-height: 297mm;
+
+    margin: 0 auto;
+
+    padding: 16mm 15mm 13mm;
+
+    overflow: hidden;
+
+    background: #ffffff;
+    color: #242424;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    box-shadow:
+        0 12px 35px rgba(19, 34, 62, 0.12);
+}
+
+
+/* =====================================================
+   ENCABEZADO
+===================================================== */
+
+.note-header {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        250px;
+
+    gap: 45px;
+
+    align-items: start;
+}
+
+
+.note-header > * {
+    min-width: 0;
+}
+
+
+.note-company-logo {
+    width: 235px;
+    max-width: 100%;
+    height: 90px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    margin-bottom: 8px;
+
+    background: #081b3d;
+}
+
+
+.note-company-logo img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: contain;
+}
+
+
+.note-company-logo-fallback {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #071c44 0%,
+            #071c44 62%,
+            #1757d7 62%,
+            #ed3045 100%
+        );
+
+    color: #ffffff;
+
+    font-size: 26px;
+    font-weight: 900;
+
+    letter-spacing: 2px;
+}
+
+
+.note-company-name {
+    margin-bottom: 4px;
+
+    color: #222222;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.note-company-info {
+    max-width: 100%;
+
+    color: #505050;
+
+    font-size: 10px;
+    line-height: 1.4;
+
+    overflow-wrap: anywhere;
+}
+
+
+.note-company-info span {
+    display: block;
+}
+
+
+.note-document-info {
+    min-width: 0;
+
+    text-align: right;
+}
+
+
+.note-document-info h1 {
+    margin: 0 0 5px;
+
+    color: #111111;
+
+    font-size: 31px;
+    font-weight: 400;
+
+    letter-spacing: 0.5px;
+}
+
+
+.note-document-code {
+    margin-bottom: 22px;
+
+    color: #222222;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+
+.note-balance-label {
+    margin-bottom: 4px;
+
+    color: #555555;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+
+.note-balance-value {
+    color: #111111;
+
+    font-size: 16px;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   CLIENTE / FECHAS
+===================================================== */
+
+.note-meta-section {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        280px;
+
+    gap: 50px;
+
+    align-items: end;
+
+    margin-top: 48px;
+    margin-bottom: 23px;
+}
+
+
+.note-meta-section > * {
+    min-width: 0;
+}
+
+
+.note-client-label {
+    margin-bottom: 5px;
+
+    color: #555555;
+
+    font-size: 10px;
+}
+
+
+.note-client-name {
+    margin-bottom: 3px;
+
+    color: #222222;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    overflow-wrap: anywhere;
+}
+
+
+.note-client-phone {
+    color: #555555;
+
+    font-size: 9px;
+
+    overflow-wrap: anywhere;
+}
+
+
+.note-dates {
+    min-width: 0;
+
+    display: grid;
+    gap: 8px;
+}
+
+
+.note-date-row {
+    min-width: 0;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 130px)
+        minmax(0, 1fr);
+
+    gap: 14px;
+
+    font-size: 9px;
+}
+
+
+.note-date-row span:first-child {
+    min-width: 0;
+
+    color: #555555;
+
+    text-align: right;
+}
+
+
+.note-date-row strong {
+    min-width: 0;
+
+    font-weight: 400;
+
+    text-align: right;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =====================================================
+   TABLA DE ARTÍCULOS
+
+   IMPORTANTE:
+   min-width: 0 !important elimina cualquier
+   min-width global heredado desde pedidos.css.
+===================================================== */
+
+.note-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    margin: 0 !important;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    table-layout: fixed;
+}
+
+
+.note-table thead {
+    background: #3d3d3b;
+    color: #ffffff;
+}
+
+
+.note-table tr {
+    width: 100%;
+}
+
+
+.note-table th {
+    min-width: 0 !important;
+    max-width: none !important;
+
+    padding: 8px;
+
+    border: 0;
+
+    background: #3d3d3b;
+    color: #ffffff;
+
+    font-size: 8px;
+    font-weight: 400;
+
+    text-align: left;
+    text-transform: none;
+
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+
+.note-table td {
+    min-width: 0 !important;
+    max-width: none !important;
+
+    padding: 11px 8px;
+
+    border: 0;
+    border-bottom: 1px solid #cfcfcf;
+
+    background: transparent;
+    color: #222222;
+
+    font-size: 9px;
+
+    vertical-align: top;
+
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+
+/* Número */
+
+.note-table th:nth-child(1),
+.note-table td:nth-child(1) {
+    width: 7%;
+
+    text-align: center;
+}
+
+
+/* Artículo */
+
+.note-table th:nth-child(2),
+.note-table td:nth-child(2) {
+    width: 51%;
+
+    text-align: left;
+}
+
+
+/* Cantidad */
+
+.note-table th:nth-child(3),
+.note-table td:nth-child(3) {
+    width: 12%;
+
+    text-align: center;
+}
+
+
+/* Tarifa */
+
+.note-table th:nth-child(4),
+.note-table td:nth-child(4) {
+    width: 15%;
+
+    text-align: right;
+}
+
+
+/* Importe */
+
+.note-table th:nth-child(5),
+.note-table td:nth-child(5) {
+    width: 15%;
+
+    text-align: right;
+}
+
+
+.note-table td:nth-child(3),
+.note-table td:nth-child(4),
+.note-table td:nth-child(5) {
+    white-space: nowrap;
+}
+
+
+.note-item-service {
+    display: block;
+
+    max-width: 100%;
+
+    margin-bottom: 3px;
+
+    color: #222222;
+
+    font-weight: 700;
+
+    overflow-wrap: anywhere;
+}
+
+
+.note-item-description {
+    display: block;
+
+    max-width: 100%;
+
+    color: #777777;
+
+    line-height: 1.35;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =====================================================
+   TOTALES
+===================================================== */
+
+.note-totals-wrapper {
+    width: 100%;
+
+    display: flex;
+    justify-content: flex-end;
+
+    margin-top: 8px;
+}
+
+
+.note-totals {
+    width: 310px;
+    max-width: 100%;
+}
+
+
+.note-total-row {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        115px;
+
+    gap: 18px;
+
+    padding: 7px 9px;
+
+    font-size: 9px;
+}
+
+
+.note-total-row span:first-child {
+    min-width: 0;
+
+    text-align: right;
+}
+
+
+.note-total-row span:last-child {
+    min-width: 0;
+
+    text-align: right;
+
+    white-space: nowrap;
+}
+
+
+.note-total-row.total {
+    margin-top: 3px;
+
+    font-weight: 800;
+}
+
+
+.note-total-row.advance {
+    color: #1757d7;
+
+    font-weight: 700;
+}
+
+
+.note-total-row.balance {
+    margin-top: 2px;
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+
+    background: #f2f1ef;
+
+    font-weight: 800;
+}
+
+
+/* =====================================================
+   NOTAS
+===================================================== */
+
+.note-bottom-content {
+    width: 100%;
+
+    margin-top: 42px;
+}
+
+
+.note-section-title {
+    margin-bottom: 9px;
+
+    color: #444444;
+
+    font-size: 10px;
+    font-weight: 400;
+}
+
+
+.note-customer-notes {
+    min-height: 25px;
+
+    margin-bottom: 27px;
+
+    color: #555555;
+
+    font-size: 8px;
+    line-height: 1.5;
+
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+
+/* =====================================================
+   TÉRMINOS
+===================================================== */
+
+.note-terms {
+    max-width: 100%;
+
+    color: #555555;
+
+    font-size: 7.5px;
+    line-height: 1.35;
+
+    overflow-wrap: anywhere;
+}
+
+
+.note-terms-heading {
+    margin-bottom: 4px;
+
+    color: #444444;
+
+    font-size: 10px;
+}
+
+
+.note-terms-subtitle {
+    margin-bottom: 5px;
+
+    color: #555555;
+
+    font-size: 8px;
+}
+
+
+.note-terms ol {
+    margin: 0;
+
+    padding-left: 15px;
+}
+
+
+.note-terms li {
+    margin-bottom: 2px;
+
+    break-inside: avoid;
+}
+
+
+.note-acceptance {
+    margin-top: 3px;
+
+    font-style: italic;
+}
+
+
+/* =====================================================
+   PIE
+===================================================== */
+
+.note-footer {
+    width: 100%;
+
+    margin-top: 45px;
+    padding-top: 12px;
+
+    border-top: 1px solid #cfcfcf;
+
+    color: #777777;
+
+    font-size: 7px;
+
+    text-align: center;
+}
+
+
+.note-footer strong {
+    color: #1757d7;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .note-modal {
+        inset: 0;
+
+        width: 100%;
+        height: 100dvh;
+
+        margin: 0;
+
+        border-radius: 0;
+    }
+
+
+    .note-toolbar {
+        border-radius: 0;
+    }
+
+
+    .note-preview-area {
+        padding: 18px;
+
+        overflow: auto;
+    }
+
+
+    /*
+        En pantallas pequeñas mantenemos las
+        proporciones reales de A4 y permitimos
+        desplazamiento horizontal en el preview.
+    */
+
+    .service-note {
+        width: 210mm;
+        max-width: none;
+
+        margin: 0 auto;
+
+        transform-origin: top center;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .note-toolbar {
+        min-height: auto;
+
+        align-items: flex-start;
+
+        padding: 12px;
+    }
+
+
+    .note-toolbar-title {
+        display: none;
+    }
+
+
+    .note-toolbar-actions {
+        width: 100%;
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+
+        gap: 8px;
+    }
+
+
+    .note-toolbar-button.primary {
+        width: 100%;
+    }
+
+
+    .note-preview-area {
+        padding: 10px;
+    }
+
+
+    /*
+        No modificamos el contenido de la hoja;
+        únicamente reducimos la vista previa.
+    */
+
+    .service-note {
+        width: 210mm;
+        max-width: none;
+
+        margin: 0;
+
+        transform: scale(0.58);
+        transform-origin: top left;
+    }
+
+}
+
+
+/* =====================================================
+   IMPRESIÓN / GUARDAR PDF
+===================================================== */
+
+@media print {
+
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+
+    html,
+    body {
+        width: 210mm !important;
+        min-width: 210mm !important;
+        max-width: 210mm !important;
+
+        min-height: 297mm;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        overflow: visible !important;
+
+        background: #ffffff !important;
+    }
+
+
+    body * {
+        visibility: hidden !important;
+    }
+
+
+    #serviceNote,
+    #serviceNote * {
+        visibility: visible !important;
+    }
+
+
+    .note-modal {
+        position: static !important;
+        inset: auto !important;
+
+        width: 210mm !important;
+        max-width: 210mm !important;
+        height: auto !important;
+
+        margin: 0 !important;
+
+        visibility: visible !important;
+        opacity: 1 !important;
+
+        overflow: visible !important;
+
+        border-radius: 0 !important;
+
+        background: transparent !important;
+
+        box-shadow: none !important;
+
+        transform: none !important;
+    }
+
+
+    .note-toolbar {
+        display: none !important;
+    }
+
+
+    .note-preview-area {
+        position: static !important;
+
+        width: 210mm !important;
+        max-width: 210mm !important;
+
+        overflow: visible !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        background: transparent !important;
+    }
+
+
+    #serviceNote {
+        position: absolute !important;
+
+        top: 0 !important;
+        left: 0 !important;
+
+        width: 210mm !important;
+        min-width: 210mm !important;
+        max-width: 210mm !important;
+
+        min-height: 297mm;
+
+        margin: 0 !important;
+
+        padding:
+            14mm
+            14mm
+            12mm !important;
+
+        overflow: hidden !important;
+
+        background: #ffffff !important;
+
+        box-shadow: none !important;
+
+        transform: none !important;
+    }
+
+
+    /*
+        Protección contra reglas globales
+        de tablas de pedidos.css.
+    */
+
+    #serviceNote .note-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+
+        margin: 0 !important;
+
+        table-layout: fixed !important;
+
+        border-collapse: collapse !important;
+    }
+
+
+    #serviceNote .note-table th,
+    #serviceNote .note-table td {
+        min-width: 0 !important;
+        max-width: none !important;
+    }
+
+
+    #serviceNote .note-table thead,
+    #serviceNote .note-table th {
+        background: #3d3d3b !important;
+        color: #ffffff !important;
+
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+
+    #serviceNote .note-total-row.balance {
+        background: #f2f1ef !important;
+
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+
+    #serviceNote .note-total-row.advance {
+        color: #1757d7 !important;
+
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+
+    #serviceNote .note-company-logo-fallback {
+        background:
+            linear-gradient(
+                135deg,
+                #071c44 0%,
+                #071c44 62%,
+                #1757d7 62%,
+                #ed3045 100%
+            ) !important;
+
+        color: #ffffff !important;
+
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+
+    /*
+        Evita cortes incómodos entre artículos.
+    */
+
+    #serviceNote .note-table tr,
+    #serviceNote .note-totals-wrapper,
+    #serviceNote .note-terms li {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+}

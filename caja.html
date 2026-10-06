@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Caja | Pisada Bacana</title>
+
+    <link rel="stylesheet" href="css/caja.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">PB</div>
+
+            <div class="brand-text">
+                <strong>Pisada</strong>
+                <span>Bacana</span>
+            </div>
+        </div>
+
+        <p class="menu-title">MENÚ PRINCIPAL</p>
+
+        <nav class="navigation">
+
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">▦</span>
+                <span>Inicio</span>
+            </a>
+
+            <a href="pedidos.html" class="nav-item">
+                <span class="nav-icon">▣</span>
+                <span>Pedidos</span>
+                <span class="nav-counter" id="navOrderCount">0</span>
+            </a>
+
+            <a href="clientes.html" class="nav-item">
+                <span class="nav-icon">●</span>
+                <span>Clientes</span>
+            </a>
+
+            <a href="caja.html" class="nav-item active">
+                <span class="nav-icon">$</span>
+                <span>Caja</span>
+            </a>
+
+            <a href="reportes.html" class="nav-item">
+                <span class="nav-icon">▥</span>
+                <span>Reportes</span>
+            </a>
+
+            <a href="ajustes.html" class="nav-item">
+                <span class="nav-icon">⚙</span>
+                <span>Ajustes</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="profile">
+
+                <div class="profile-avatar">
+                    A
+                </div>
+
+                <div>
+                    <strong>Administrador</strong>
+                    <span>Pisada Bacana</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                    class="menu-button"
+                    id="menuButton"
+                    aria-label="Abrir menú"
+                >
+                    ☰
+                </button>
+
+                <div>
+                    <h1>Caja</h1>
+                    <p id="currentDate"></p>
+                </div>
+
+            </div>
+
+            <a
+                href="pedidos.html"
+                class="primary-button"
+            >
+                Ver pedidos
+            </a>
+
+        </header>
+
+
+        <div class="content">
+
+            <!-- ENCABEZADO -->
+            <section class="page-heading">
+
+                <div>
+                    <span class="eyebrow">
+                        FINANZAS
+                    </span>
+
+                    <h2>Control de caja</h2>
+
+                    <p>
+                        Consulta cobros, saldos pendientes y movimientos registrados.
+                    </p>
+                </div>
+
+            </section>
+
+
+            <!-- MÉTRICAS -->
+            <section class="stats-grid">
+
+                <article class="stat-card">
+
+                    <div class="stat-icon blue">
+                        $
+                    </div>
+
+                    <div>
+                        <span>Cobrado total</span>
+
+                        <strong id="totalCollected">
+                            $0
+                        </strong>
+
+                        <small>
+                            Dinero recibido
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon green">
+                        ↓
+                    </div>
+
+                    <div>
+                        <span>Cobrado hoy</span>
+
+                        <strong id="todayCollected">
+                            $0
+                        </strong>
+
+                        <small id="todayPaymentsCount">
+                            0 movimientos
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon red">
+                        !
+                    </div>
+
+                    <div>
+                        <span>Saldo pendiente</span>
+
+                        <strong id="totalPending">
+                            $0
+                        </strong>
+
+                        <small id="pendingOrdersCount">
+                            0 pedidos
+                        </small>
+                    </div>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-icon purple">
+                        ▣
+                    </div>
+
+                    <div>
+                        <span>Valor de pedidos</span>
+
+                        <strong id="totalSales">
+                            $0
+                        </strong>
+
+                        <small>
+                            Servicios registrados
+                        </small>
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- RESUMEN -->
+            <section class="finance-grid">
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                COBROS
+                            </span>
+
+                            <h3>
+                                Métodos de pago
+                            </h3>
+                        </div>
+
+                    </div>
+
+
+                    <div class="payment-methods">
+
+                        <div class="payment-method-row">
+
+                            <div class="method-info">
+                                <div class="method-icon blue">$</div>
+
+                                <div>
+                                    <strong>Efectivo</strong>
+                                    <span id="cashCount">0 movimientos</span>
+                                </div>
+                            </div>
+
+                            <strong id="cashTotal">
+                                $0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="payment-method-row">
+
+                            <div class="method-info">
+                                <div class="method-icon purple">↔</div>
+
+                                <div>
+                                    <strong>Transferencia</strong>
+                                    <span id="transferCount">0 movimientos</span>
+                                </div>
+                            </div>
+
+                            <strong id="transferTotal">
+                                $0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="payment-method-row">
+
+                            <div class="method-info">
+                                <div class="method-icon green">▭</div>
+
+                                <div>
+                                    <strong>Tarjeta</strong>
+                                    <span id="cardCount">0 movimientos</span>
+                                </div>
+                            </div>
+
+                            <strong id="cardTotal">
+                                $0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="payment-method-row">
+
+                            <div class="method-info">
+                                <div class="method-icon gray">?</div>
+
+                                <div>
+                                    <strong>Sin especificar</strong>
+                                    <span id="otherCount">0 movimientos</span>
+                                </div>
+                            </div>
+
+                            <strong id="otherTotal">
+                                $0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <span class="eyebrow">
+                                POR COBRAR
+                            </span>
+
+                            <h3>
+                                Saldos pendientes
+                            </h3>
+                        </div>
+
+                        <a
+                            href="pedidos.html"
+                            class="text-link"
+                        >
+                            Ir a pedidos →
+                        </a>
+
+                    </div>
+
+
+                    <div
+                        class="pending-list"
+                        id="pendingList"
+                    ></div>
+
+
+                    <div
+                        class="mini-empty"
+                        id="pendingEmpty"
+                    >
+                        No hay saldos pendientes.
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- MOVIMIENTOS -->
+            <section class="panel movements-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <span class="eyebrow">
+                            MOVIMIENTOS
+                        </span>
+
+                        <h3>
+                            Historial de cobros
+                        </h3>
+                    </div>
+
+                </div>
+
+
+                <div class="toolbar">
+
+                    <div class="search-box">
+
+                        <span>⌕</span>
+
+                        <input
+                            type="search"
+                            id="searchInput"
+                            placeholder="Buscar por cliente, folio o método..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+
+                    <select
+                        id="periodFilter"
+                        class="filter-select"
+                    >
+                        <option value="all">
+                            Todo el historial
+                        </option>
+
+                        <option value="today">
+                            Hoy
+                        </option>
+
+                        <option value="week">
+                            Últimos 7 días
+                        </option>
+
+                        <option value="month">
+                            Este mes
+                        </option>
+                    </select>
+
+
+                    <select
+                        id="methodFilter"
+                        class="filter-select"
+                    >
+                        <option value="Todos">
+                            Todos los métodos
+                        </option>
+
+                        <option value="Efectivo">
+                            Efectivo
+                        </option>
+
+                        <option value="Transferencia">
+                            Transferencia
+                        </option>
+
+                        <option value="Tarjeta">
+                            Tarjeta
+                        </option>
+
+                        <option value="Otro">
+                            Sin especificar
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="results-info">
+
+                    <div>
+                        <strong id="resultCount">
+                            0 movimientos
+                        </strong>
+
+                        <span id="filteredTotal">
+                            Total mostrado: $0
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Folio</th>
+                                <th>Cliente</th>
+                                <th>Concepto</th>
+                                <th>Método</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="movementsTable"></tbody>
+
+                    </table>
+
+
+                    <div
+                        class="empty-state"
+                        id="emptyState"
+                    >
+
+                        <div class="empty-logo">
+                            $
+                        </div>
+
+                        <h3>
+                            No hay movimientos
+                        </h3>
+
+                        <p>
+                            Los anticipos y pagos registrados aparecerán aquí.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- OVERLAY -->
+<div
+    class="overlay"
+    id="overlay"
+></div>
+
+
+<script src="js/caja.js"></script>
+
+</body>
+</html>
