@@ -1,6 +1,26 @@
 "use strict";
 
 /* =====================================================
+   FIRESTORE
+===================================================== */
+
+function getDatabase() {
+
+    if (
+        !window.PisadaBacanaDB
+    ) {
+
+        throw new Error(
+            "Firebase todavía no está listo."
+        );
+
+    }
+
+    return window.PisadaBacanaDB;
+
+}
+
+/* =====================================================
    CONFIGURACIÓN
 ===================================================== */
 
@@ -283,9 +303,19 @@ function loadOrders() {
 
 function saveOrders() {
 
+    /*
+        Ya no guardamos el array completo aquí.
+
+        Firestore es la fuente principal.
+        firebase-bootstrap.js mantiene automáticamente
+        el espejo local para compatibilidad.
+    */
+
     localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify(orders)
+        JSON.stringify(
+            orders
+        )
     );
 
 }
@@ -1506,10 +1536,9 @@ function closeOrderModal() {
    CREAR PEDIDO
 ===================================================== */
 
-function createOrder(event) {
+async function createOrder(event) {
 
     event.preventDefault();
-
 
     if (
         newOrderItems.length === 0
@@ -1590,7 +1619,8 @@ function createOrder(event) {
     const total =
         cleanItems.reduce(
             (sum, item) =>
-                sum + item.price,
+                sum +
+                item.price,
             0
         );
 
@@ -1604,9 +1634,7 @@ function createOrder(event) {
         );
 
 
-    if (
-        advance > total
-    ) {
+    if (advance > total) {
 
         showToast(
             "El anticipo no puede ser mayor al total.",
@@ -1618,162 +1646,195 @@ function createOrder(event) {
     }
 
 
-    const now =
-        new Date().toISOString();
+    try {
+
+        const database =
+            getDatabase();
 
 
-    const order = {
+        const code =
+            await database
+                .getNextOrderCode(
+                    "PB"
+                );
 
-        id:
-            createId("order"),
 
-        code:
-            generateOrderCode(),
+        const now =
+            new Date()
+                .toISOString();
 
-        clientName:
-            clientName.value.trim(),
 
-        phone:
-            clientPhone.value.trim(),
+        const payments =
+            advance > 0
+                ? [{
+                    id:
+                        createId(
+                            "payment"
+                        ),
 
-        items:
-            cleanItems,
+                    amount:
+                        advance,
 
-        price:
-            total,
+                    method:
+                        paymentMethod.value,
 
-        advance:
+                    type:
+                        "Anticipo",
+
+                    date:
+                        now
+                }]
+                : [];
+
+
+        const order = {
+
+            id:
+                createId(
+                    "order"
+                ),
+
+            code,
+
+            clientName:
+                clientName.value.trim(),
+
+            phone:
+                clientPhone.value.trim(),
+
+            items:
+                cleanItems,
+
+            price:
+                total,
+
+            paid:
+                advance,
+
+            /*
+                Compatibilidad temporal.
+            */
             advance,
 
-        balance:
-            Math.max(
-                total - advance,
-                0
-            ),
+            balance:
+                Math.max(
+                    total - advance,
+                    0
+                ),
 
-        paymentMethod:
-            paymentMethod.value,
+            payments,
 
-        status:
-            orderStatus.value,
+            paymentMethod:
+                paymentMethod.value,
 
-        deliveryDate:
-            deliveryDate.value,
+            status:
+                orderStatus.value,
 
-        notes:
-            orderNotes.value.trim(),
+            deliveryDate:
+                deliveryDate.value,
 
-        createdAt:
-            now,
+            notes:
+                orderNotes.value.trim(),
 
-        updatedAt:
-            now
-    };
+            createdAt:
+                now,
 
+            updatedAt:
+                now
+        };
 
-    /*
-        Compatibilidad con módulos anteriores.
-    */
-
-    if (
-        cleanItems.length > 0
-    ) {
 
         order.itemType =
-            cleanItems[0].itemType;
+            cleanItems[0]
+                .itemType;
 
         order.brand =
-            cleanItems[0].brand;
+            cleanItems[0]
+                .brand;
 
         order.model =
-            cleanItems[0].model;
+            cleanItems[0]
+                .model;
 
         order.color =
-            cleanItems[0].color;
+            cleanItems[0]
+                .color;
 
         order.service =
             cleanItems.length === 1
-                ? cleanItems[0].service
+                ? cleanItems[0]
+                    .service
                 : `${cleanItems.length} artículos`;
 
+
+        await database
+            .saveOrder(
+                order
+            );
+
+
+        /*
+            Actualizamos inmediatamente la UI.
+            El listener de Firestore volverá a
+            sincronizar el array después.
+        */
+
+        orders =
+            await database
+                .getOrders();
+
+
+        closeOrderModal();
+
+        renderEverything();
+
+
+        showToast(
+            `${order.code} creado con ${cleanItems.length} ${
+                cleanItems.length === 1
+                    ? "artículo"
+                    : "artículos"
+            }.`
+        );
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    window.PisadaBacanaNote &&
+                    typeof window
+                        .PisadaBacanaNote
+                        .open ===
+                        "function"
+                ) {
+
+                    window
+                        .PisadaBacanaNote
+                        .open(
+                            order.id
+                        );
+
+                }
+
+            },
+            180
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error creando pedido:",
+            error
+        );
+
+
+        showToast(
+            "No se pudo guardar el pedido en Firebase.",
+            true
+        );
+
     }
-
-
-    /*
-        Guardamos el anticipo inicial como movimiento.
-    */
-
-    if (
-        advance > 0
-    ) {
-
-        order.payments = [
-            {
-                amount:
-                    advance,
-
-                method:
-                    paymentMethod.value,
-
-                date:
-                    now,
-
-                type:
-                    "Anticipo"
-            }
-        ];
-
-    } else {
-
-        order.payments = [];
-
-    }
-
-
-    /*
-        Guardar pedido.
-    */
-
-    orders.unshift(order);
-
-    saveOrders();
-
-    closeOrderModal();
-
-    renderEverything();
-
-
-    showToast(
-        `${order.code} creado con ${cleanItems.length} ${
-            cleanItems.length === 1
-                ? "artículo"
-                : "artículos"
-        }.`
-    );
-
-
-    /*
-        Abrir automáticamente la nota.
-    */
-
-    setTimeout(
-        () => {
-
-            if (
-                window.PisadaBacanaNote &&
-                typeof window.PisadaBacanaNote.open ===
-                    "function"
-            ) {
-
-                window.PisadaBacanaNote.open(
-                    order.id
-                );
-
-            }
-
-        },
-        180
-    );
 
 }
 
@@ -2665,109 +2726,152 @@ function renderProgress(status) {
 /* =====================================================
    GUARDAR CAMBIOS
 ===================================================== */
-
-function saveOrderChanges() {
+async function saveOrderChanges() {
 
     const order =
         getSelectedOrder();
 
 
     if (!order) {
+
+        showToast(
+            "No se encontró el pedido.",
+            true
+        );
+
         return;
+
     }
 
 
-    const previousStatus =
-        order.status;
+    try {
+
+        const previousStatus =
+            order.status;
 
 
-    order.status =
-        detailStatus.value;
+        order.status =
+            detailStatus.value;
 
 
-    order.deliveryDate =
-        detailDeliveryDate.value;
+        order.deliveryDate =
+            detailDeliveryDate.value;
 
 
-    order.updatedAt =
-        new Date()
-            .toISOString();
+        order.notes =
+            detailNotes.value.trim();
 
 
-    if (
-        order.status ===
-            "Entregado" &&
-        previousStatus !==
-            "Entregado"
-    ) {
-
-        order.deliveredAt =
+        order.updatedAt =
             new Date()
                 .toISOString();
 
+
+        if (
+            order.status ===
+                "Entregado" &&
+            previousStatus !==
+                "Entregado"
+        ) {
+
+            order.deliveredAt =
+                new Date()
+                    .toISOString();
+
+        }
+
+
+        if (
+            order.status !==
+            "Entregado"
+        ) {
+
+            delete order
+                .deliveredAt;
+
+        }
+
+
+        await getDatabase()
+            .saveOrder(
+                order
+            );
+
+
+        orders =
+            await getDatabase()
+                .getOrders();
+
+
+        renderEverything();
+
+        openOrderDetail(
+            order.id
+        );
+
+
+        showToast(
+            `${order.code} actualizado.`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error actualizando pedido:",
+            error
+        );
+
+
+        showToast(
+            "No se pudieron guardar los cambios.",
+            true
+        );
+
     }
 
-
-    saveOrders();
-
-    renderEverything();
-
-    closeOrderDetail();
-
-
-    showToast(
-        "Pedido actualizado."
-    );
-
 }
-
 
 /* =====================================================
    REGISTRAR PAGO
 ===================================================== */
 
-function registerPayment() {
+async function registerPayment() {
 
     const order =
         getSelectedOrder();
 
 
     if (!order) {
+
+        showToast(
+            "No se encontró el pedido.",
+            true
+        );
+
         return;
+
     }
 
 
-    const payment =
+    const amount =
         Number(
-            paymentAmount.value
+            paymentAmount.value || 0
+        );
+
+
+    const currentBalance =
+        getOrderBalance(
+            order
         );
 
 
     if (
-        !Number.isFinite(payment) ||
-        payment <= 0
+        !Number.isFinite(amount) ||
+        amount <= 0
     ) {
 
         showToast(
-            "Ingresa un pago válido.",
-            true
-        );
-
-        return;
-
-    }
-
-
-    const balance =
-        getOrderBalance(order);
-
-
-    if (
-        balance <= 0
-    ) {
-
-        showToast(
-            "Este pedido ya está pagado.",
+            "Ingresa una cantidad válida.",
             true
         );
 
@@ -2777,13 +2881,12 @@ function registerPayment() {
 
 
     if (
-        payment > balance
+        amount >
+        currentBalance
     ) {
 
         showToast(
-            `El pago no puede superar ${formatMoney(
-                balance
-            )}.`,
+            "El pago no puede ser mayor al saldo.",
             true
         );
 
@@ -2792,70 +2895,125 @@ function registerPayment() {
     }
 
 
-    order.advance =
-        Math.max(
-            Number(
-                order.advance || 0
-            ),
-            0
-        ) +
-        payment;
+    try {
 
-
-    order.balance =
-        getOrderBalance(order);
-
-
-    if (
-        !Array.isArray(
-            order.payments
-        )
-    ) {
-
-        order.payments = [];
-
-    }
-
-
-    order.payments.push({
-
-        amount:
-            payment,
-
-        method:
-            order.paymentMethod ||
-            "No especificado",
-
-        date:
+        const now =
             new Date()
-                .toISOString(),
-
-        type:
-            "Pago"
-    });
+                .toISOString();
 
 
-    order.updatedAt =
-        new Date()
-            .toISOString();
+        if (
+            !Array.isArray(
+                order.payments
+            )
+        ) {
+
+            order.payments = [];
+
+        }
 
 
-    saveOrders();
+        order.payments.push({
+            id:
+                createId(
+                    "payment"
+                ),
 
-    renderEverything();
+            amount,
 
-    renderDetailPayment(
-        order
-    );
+            method:
+                paymentMethodDetail.value,
+
+            type:
+                "Pago",
+
+            date:
+                now
+        });
 
 
-    paymentAmount.value =
-        "";
+        const paid =
+            order.payments.reduce(
+                (sum, payment) =>
+                    sum +
+                    Math.max(
+                        Number(
+                            payment.amount || 0
+                        ),
+                        0
+                    ),
+                0
+            );
 
 
-    showToast(
-        "Pago registrado."
-    );
+        order.paid =
+            paid;
+
+
+        /*
+            advance se conserva temporalmente para
+            Dashboard/Caja/Reportes mientras
+            terminamos su conversión.
+        */
+
+        order.advance =
+            paid;
+
+
+        order.balance =
+            Math.max(
+                Number(
+                    order.price || 0
+                ) -
+                paid,
+                0
+            );
+
+
+        order.updatedAt =
+            now;
+
+
+        await getDatabase()
+            .saveOrder(
+                order
+            );
+
+
+        orders =
+            await getDatabase()
+                .getOrders();
+
+
+        paymentAmount.value =
+            "";
+
+
+        renderEverything();
+
+        openOrderDetail(
+            order.id
+        );
+
+
+        showToast(
+            `Pago de ${formatMoney(amount)} registrado.`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error registrando pago:",
+            error
+        );
+
+
+        showToast(
+            "No se pudo registrar el pago.",
+            true
+        );
+
+    }
 
 }
 
@@ -2864,20 +3022,27 @@ function registerPayment() {
    ELIMINAR
 ===================================================== */
 
-function deleteOrder() {
+async function deleteOrder() {
 
     const order =
         getSelectedOrder();
 
 
     if (!order) {
+
+        showToast(
+            "No se encontró el pedido.",
+            true
+        );
+
         return;
+
     }
 
 
     const confirmed =
         window.confirm(
-            `¿Eliminar ${order.code || "este pedido"}? Esta acción no se puede deshacer.`
+            `¿Eliminar definitivamente ${order.code}?`
         );
 
 
@@ -2886,24 +3051,46 @@ function deleteOrder() {
     }
 
 
-    orders =
-        orders.filter(
-            item =>
-                String(item.id) !==
-                String(order.id)
+    try {
+
+        await getDatabase()
+            .deleteOrder(
+                order.id
+            );
+
+
+        orders =
+            await getDatabase()
+                .getOrders();
+
+
+        selectedOrderId =
+            null;
+
+
+        closeOrderDetail();
+
+        renderEverything();
+
+
+        showToast(
+            `${order.code} eliminado.`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error eliminando pedido:",
+            error
         );
 
 
-    saveOrders();
+        showToast(
+            "No se pudo eliminar el pedido.",
+            true
+        );
 
-    closeOrderDetail();
-
-    renderEverything();
-
-
-    showToast(
-        "Pedido eliminado."
-    );
+    }
 
 }
 
@@ -3375,25 +3562,160 @@ window.addEventListener(
    INICIO
 ===================================================== */
 
-function initialize() {
+async function initialize() {
 
     setCurrentDate();
+
+    /*
+        Mostramos primero el respaldo local para
+        evitar una pantalla vacía mientras Firebase
+        conecta.
+    */
 
     renderEverything();
 
 
-    /*
-        Si entramos desde Dashboard o Clientes con:
+    try {
 
-        pedidos.html?nuevo=1
+        /*
+            Esperamos al bootstrap de Firestore.
+        */
 
-        abrimos el formulario oficial de Pedidos.
-    */
+        if (
+            !window.PisadaBacanaDB
+        ) {
 
-    openRequestedNewOrder();
+            await new Promise(
+                (resolve, reject) => {
+
+                    const timeout =
+                        setTimeout(
+                            () => {
+
+                                reject(
+                                    new Error(
+                                        "Firebase tardó demasiado en iniciar."
+                                    )
+                                );
+
+                            },
+                            10000
+                        );
+
+
+                    window.addEventListener(
+                        "pisadabacana:firestore-ready",
+                        () => {
+
+                            clearTimeout(
+                                timeout
+                            );
+
+                            resolve();
+
+                        },
+                        {
+                            once: true
+                        }
+                    );
+
+
+                    window.addEventListener(
+                        "pisadabacana:firestore-error",
+                        event => {
+
+                            clearTimeout(
+                                timeout
+                            );
+
+                            reject(
+                                event.detail
+                                    ?.error ||
+                                new Error(
+                                    "Error de Firebase."
+                                )
+                            );
+
+                        },
+                        {
+                            once: true
+                        }
+                    );
+
+                }
+            );
+
+        }
+
+
+        orders =
+            await getDatabase()
+                .getOrders();
+
+
+        renderEverything();
+
+
+        openRequestedNewOrder();
+
+    } catch (error) {
+
+        console.error(
+            "Pedidos funcionará temporalmente con respaldo local:",
+            error
+        );
+
+
+        showToast(
+            "No se pudo sincronizar con Firebase.",
+            true
+        );
+
+
+        /*
+            Aunque Firebase falle, mantenemos
+            disponible la interfaz.
+        */
+
+        openRequestedNewOrder();
+
+    }
 
 }
 
+window.addEventListener(
+    "pisadabacana:orders-updated",
+    event => {
+
+        if (
+            !Array.isArray(
+                event.detail?.orders
+            )
+        ) {
+            return;
+        }
+
+
+        orders =
+            event.detail.orders;
+
+
+        renderEverything();
+
+
+        if (
+            selectedOrderId &&
+            getSelectedOrder()
+        ) {
+
+            openOrderDetail(
+                selectedOrderId
+            );
+
+        }
+
+    }
+);
 
 initialize();
 
