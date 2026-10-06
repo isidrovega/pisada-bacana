@@ -32,22 +32,22 @@ from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 const firebaseConfig = {
 
     apiKey:
-        "TU_API_KEY",
+        "AIzaSyA0ARDphAawD3S3YDIGgwzkJfmDXnAUdH4",
 
     authDomain:
-        "TU_PROYECTO.firebaseapp.com",
+        "pisada-bacana.firebaseapp.com",
 
     projectId:
-        "TU_PROJECT_ID",
+        "pisada-bacana",
 
     storageBucket:
-        "TU_PROYECTO.firebasestorage.app",
+        "pisada-bacana.firebasestorage.app",
 
     messagingSenderId:
-        "TU_MESSAGING_SENDER_ID",
+        "240758534281",
 
     appId:
-        "TU_APP_ID"
+        "1:240758534281:web:f49941d475578bfcdc5658"
 
 };
 
