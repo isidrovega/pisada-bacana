@@ -1,8 +1,22 @@
 "use strict";
 
+function getDatabase() {
+
+    if (!window.PisadaBacanaDB) {
+
+        throw new Error(
+            "Firebase todavía no está listo."
+        );
+
+    }
+
+    return window.PisadaBacanaDB;
+
+}
+
 const STORAGE_KEY = "pisadaBacanaOrders";
 
-let orders = loadOrders();
+let orders = [];
 let clients = [];
 let currentFilter = "Todos";
 let selectedClientKey = null;
@@ -93,40 +107,7 @@ const historyList =
     document.getElementById("historyList");
 
 
-/* STORAGE */
 
-function loadOrders() {
-
-    try {
-
-        const stored =
-            localStorage.getItem(
-                STORAGE_KEY
-            );
-
-        if (!stored) {
-            return [];
-        }
-
-        const parsed =
-            JSON.parse(stored);
-
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
-
-    } catch (error) {
-
-        console.error(
-            "Error cargando pedidos:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
 
 
 /* UTILIDADES */
@@ -280,20 +261,26 @@ function getClientKey(order) {
 
 function getOrderBalance(order) {
 
-    if (
-        typeof order.balance === "number"
-    ) {
-
-        return Math.max(
-            order.balance,
+    const total =
+        Math.max(
+            Number(
+                order.price || 0
+            ),
             0
         );
 
-    }
+    const paid =
+        Math.max(
+            Number(
+                order.paid ??
+                order.advance ??
+                0
+            ),
+            0
+        );
 
     return Math.max(
-        Number(order.price || 0) -
-        Number(order.advance || 0),
+        total - paid,
         0
     );
 
@@ -428,14 +415,19 @@ function buildClients() {
 
 
                 const totalSpent =
-                    sortedOrders.reduce(
-                        (total, order) =>
-                            total +
-                            Number(
-                                order.price || 0
-                            ),
-                        0
-                    );
+    sortedOrders.reduce(
+        (total, order) =>
+            total +
+            Math.max(
+                Number(
+                    order.paid ??
+                    order.advance ??
+                    0
+                ),
+                0
+            ),
+        0
+    );
 
 
                 const totalPending =
@@ -1406,6 +1398,27 @@ document.addEventListener(
     }
 );
 
+
+/* =====================================================
+   SINCRONIZACIÓN CON FIRESTORE
+===================================================== */
+
+window.addEventListener(
+    "pisadabacana:orders-updated",
+    event => {
+
+        const firestoreOrders =
+            event.detail?.orders;
+
+        if (!Array.isArray(firestoreOrders)) {
+            return;
+        }
+
+        orders = firestoreOrders;
+
+        renderEverything();
+    }
+);
 
 /* INICIO */
 

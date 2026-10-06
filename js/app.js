@@ -1,5 +1,19 @@
 "use strict";
 
+function getDatabase() {
+
+    if (!window.PisadaBacanaDB) {
+
+        throw new Error(
+            "Firebase todavía no está listo."
+        );
+
+    }
+
+    return window.PisadaBacanaDB;
+
+}
+
 const STORAGE_KEY = "pisadaBacanaOrders";
 
 const STATUS_CLASSES = {
@@ -11,7 +25,8 @@ const STATUS_CLASSES = {
     "Entregado": "status-delivered"
 };
 
-let orders = loadOrders();
+let orders = [];
+let unsubscribeOrders = null;
 let toastTimer = null;
 
 
@@ -347,14 +362,19 @@ function renderStats() {
         );
 
     const income =
-        orders.reduce(
-            (total, order) =>
-                total +
+    orders.reduce(
+        (total, order) =>
+            total +
+            Math.max(
                 Number(
-                    order.advance || 0
+                    order.paid ??
+                    order.advance ??
+                    0
                 ),
-            0
-        );
+                0
+            ),
+        0
+    );
 
 
     activeOrders.textContent =
@@ -1164,18 +1184,21 @@ document.addEventListener(
 ===================================================== */
 
 window.addEventListener(
-    "storage",
+    "pisadabacana:orders-updated",
     event => {
 
         if (
-            event.key === STORAGE_KEY
+            !Array.isArray(
+                event.detail?.orders
+            )
         ) {
-
-            orders = loadOrders();
-
-            renderEverything();
-
+            return;
         }
+
+        orders =
+            event.detail.orders;
+
+        renderEverything();
 
     }
 );
@@ -1197,15 +1220,97 @@ window.addEventListener(
    INICIO
 ===================================================== */
 
-function initialize() {
+async function initialize() {
 
     setCurrentDate();
 
-    setDefaultDeliveryDate();
-
-    calculateBalance();
+    /*
+        Pintamos inicialmente la interfaz vacía
+        mientras Firebase conecta.
+    */
 
     renderEverything();
+
+    try {
+
+        /*
+            firebase-bootstrap.js expone
+            PisadaBacanaDB cuando Firebase está listo.
+        */
+
+        if (!window.PisadaBacanaDB) {
+
+            await new Promise(
+                (resolve, reject) => {
+
+                    const timeout =
+                        setTimeout(
+                            () => {
+                                reject(
+                                    new Error(
+                                        "Firebase tardó demasiado en iniciar."
+                                    )
+                                );
+                            },
+                            10000
+                        );
+
+                    window.addEventListener(
+                        "pisadabacana:firestore-ready",
+                        () => {
+
+                            clearTimeout(
+                                timeout
+                            );
+
+                            resolve();
+
+                        },
+                        {
+                            once: true
+                        }
+                    );
+
+                    window.addEventListener(
+                        "pisadabacana:firestore-error",
+                        event => {
+
+                            clearTimeout(
+                                timeout
+                            );
+
+                            reject(
+                                event.detail?.error ||
+                                new Error(
+                                    "No se pudo iniciar Firebase."
+                                )
+                            );
+
+                        },
+                        {
+                            once: true
+                        }
+                    );
+
+                }
+            );
+
+        }
+
+        orders =
+            await getDatabase()
+                .getOrders();
+
+        renderEverything();
+
+    } catch (error) {
+
+        console.error(
+            "Error cargando Dashboard desde Firestore:",
+            error
+        );
+
+    }
 
 }
 
