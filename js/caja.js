@@ -1,12 +1,23 @@
 "use strict";
 
+function getDatabase() {
+
+    if (!window.PisadaBacanaDB) {
+        throw new Error(
+            "Firebase todavía no está listo."
+        );
+    }
+
+    return window.PisadaBacanaDB;
+}
+
 /* =====================================================
    CONFIGURACIÓN
 ===================================================== */
 
 const STORAGE_KEY = "pisadaBacanaOrders";
 
-let orders = loadOrders();
+let orders = [];
 let movements = [];
 
 
@@ -111,43 +122,6 @@ const emptyState =
     document.getElementById("emptyState");
 
 
-/* =====================================================
-   STORAGE
-===================================================== */
-
-function loadOrders() {
-
-    try {
-
-        const stored =
-            localStorage.getItem(
-                STORAGE_KEY
-            );
-
-        if (!stored) {
-            return [];
-        }
-
-        const parsed =
-            JSON.parse(stored);
-
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
-
-    } catch (error) {
-
-        console.error(
-            "Error cargando pedidos:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
-
 
 /* =====================================================
    UTILIDADES
@@ -231,25 +205,74 @@ function setCurrentDate() {
 }
 
 
-function getOrderBalance(order) {
+function getOrderTotal(order) {
 
     if (
-        typeof order.balance === "number"
+        Number.isFinite(
+            Number(order.price)
+        )
     ) {
-
         return Math.max(
-            Number(order.balance),
+            Number(order.price),
             0
         );
-
     }
 
+    if (Array.isArray(order.items)) {
+
+        return order.items.reduce(
+            (total, item) =>
+                total +
+                Math.max(
+                    Number(item.price || 0),
+                    0
+                ),
+            0
+        );
+    }
+
+    return 0;
+}
+
+
+function getPaidAmount(order) {
+
+    if (Array.isArray(order.payments)) {
+
+        return order.payments.reduce(
+            (total, payment) =>
+                total +
+                Math.max(
+                    Number(payment.amount || 0),
+                    0
+                ),
+            0
+        );
+    }
+
+    /*
+        Compatibilidad defensiva con un pedido
+        antiguo que todavía no haya sido normalizado.
+    */
+
     return Math.max(
-        Number(order.price || 0) -
-        Number(order.advance || 0),
+        Number(
+            order.paid ??
+            order.advance ??
+            0
+        ),
         0
     );
+}
 
+
+function getOrderBalance(order) {
+
+    return Math.max(
+        getOrderTotal(order) -
+        getPaidAmount(order),
+        0
+    );
 }
 
 
@@ -339,162 +362,84 @@ function buildMovements() {
 
     const result = [];
 
+    orders.forEach(order => {
 
-    orders.forEach(
-        order => {
+        const registeredPayments =
+            Array.isArray(order.payments)
+                ? order.payments
+                : [];
 
-            const initialAdvance =
-                Number(
-                    order.advance || 0
-                );
+        registeredPayments.forEach(
+            (payment, index) => {
 
-
-            const registeredPayments =
-                Array.isArray(
-                    order.payments
-                )
-                    ? order.payments
-                    : [];
-
-
-            const additionalPaymentsTotal =
-                registeredPayments.reduce(
-                    (total, payment) =>
-                        total +
+                const amount =
+                    Math.max(
                         Number(
                             payment.amount || 0
                         ),
-                    0
-                );
+                        0
+                    );
 
+                if (amount <= 0) {
+                    return;
+                }
 
-            /*
-                pedidos.js incrementa order.advance
-                cuando se registra un pago adicional.
-
-                Por eso debemos restar esos pagos para
-                recuperar el anticipo original y evitar
-                contar el dinero dos veces.
-            */
-
-            const originalAdvance =
-                Math.max(
-                    initialAdvance -
-                    additionalPaymentsTotal,
-                    0
-                );
-
-
-            if (
-                originalAdvance > 0
-            ) {
+                const rawMethod =
+                    payment.method ||
+                    order.paymentMethod ||
+                    "Sin especificar";
 
                 result.push({
 
                     id:
-                        `${order.id}-initial`,
+                        payment.id ||
+                        `${order.id}-payment-${index}`,
 
                     orderId:
                         order.id,
 
                     code:
-                        order.code,
+                        order.code ||
+                        "Sin folio",
 
                     clientName:
-                        order.clientName,
+                        order.clientName ||
+                        "Sin cliente",
 
-                    amount:
-                        originalAdvance,
+                    amount,
 
                     method:
                         normalizeMethod(
-                            order.paymentMethod
+                            rawMethod
                         ),
 
-                    rawMethod:
-                        order.paymentMethod ||
-                        "Sin especificar",
+                    rawMethod,
 
                     type:
-                        "Anticipo",
+                        payment.type ||
+                        (
+                            index === 0
+                                ? "Anticipo"
+                                : "Pago"
+                        ),
 
                     date:
+                        payment.date ||
                         order.createdAt ||
                         new Date(0)
                             .toISOString()
 
                 });
-
             }
-
-
-            registeredPayments.forEach(
-                (payment, index) => {
-
-                    const amount =
-                        Number(
-                            payment.amount || 0
-                        );
-
-
-                    if (
-                        amount <= 0
-                    ) {
-                        return;
-                    }
-
-
-                    result.push({
-
-                        id:
-                            `${order.id}-payment-${index}`,
-
-                        orderId:
-                            order.id,
-
-                        code:
-                            order.code,
-
-                        clientName:
-                            order.clientName,
-
-                        amount,
-
-                        method:
-                            normalizeMethod(
-                                payment.method
-                            ),
-
-                        rawMethod:
-                            payment.method ||
-                            "Sin especificar",
-
-                        type:
-                            "Pago",
-
-                        date:
-                            payment.date ||
-                            order.updatedAt ||
-                            order.createdAt ||
-                            new Date(0)
-                                .toISOString()
-
-                    });
-
-                }
-            );
-
-        }
-    );
-
+        );
+    });
 
     movements =
         result.sort(
-            (a, b) =>
-                new Date(b.date) -
-                new Date(a.date)
+            (first, second) =>
+                new Date(second.date) -
+                new Date(first.date)
         );
-
 }
 
 
@@ -1204,18 +1149,7 @@ document
 /* =====================================================
    RENDER GENERAL
 ===================================================== */
-
 function renderEverything() {
-
-    /*
-        Volvemos a leer localStorage para
-        mostrar cualquier cambio realizado
-        desde Pedidos.
-    */
-
-    orders =
-        loadOrders();
-
 
     buildMovements();
 
@@ -1226,7 +1160,6 @@ function renderEverything() {
     renderPendingOrders();
 
     renderMovements();
-
 }
 
 
@@ -1295,50 +1228,107 @@ document.addEventListener(
     }
 );
 
-
-/*
-    Si localStorage cambia desde otra
-    pestaña del navegador, Caja se actualiza.
-*/
+/* =====================================================
+   SINCRONIZACIÓN FIRESTORE
+===================================================== */
 
 window.addEventListener(
-    "storage",
+    "pisadabacana:orders-updated",
     event => {
 
-        if (
-            event.key === STORAGE_KEY
-        ) {
+        const firestoreOrders =
+            event.detail?.orders;
 
-            renderEverything();
-
+        if (!Array.isArray(firestoreOrders)) {
+            return;
         }
 
+        orders = firestoreOrders;
+
+        renderEverything();
     }
 );
-
-
-/*
-    Cuando regresamos a Caja después
-    de visitar Pedidos, actualizamos
-    los datos nuevamente.
-*/
-
-window.addEventListener(
-    "pageshow",
-    renderEverything
-);
-
 
 /* =====================================================
    INICIO
 ===================================================== */
 
-function initialize() {
+async function initialize() {
 
     setCurrentDate();
 
+    /*
+        Pintamos la estructura mientras Firebase
+        termina de iniciar.
+    */
+
     renderEverything();
 
+    try {
+
+        if (!window.PisadaBacanaDB) {
+
+            await new Promise(
+                (resolve, reject) => {
+
+                    const timeout =
+                        setTimeout(
+                            () => {
+                                reject(
+                                    new Error(
+                                        "Firebase tardó demasiado en iniciar."
+                                    )
+                                );
+                            },
+                            10000
+                        );
+
+                    window.addEventListener(
+                        "pisadabacana:firestore-ready",
+                        () => {
+
+                            clearTimeout(timeout);
+                            resolve();
+                        },
+                        {
+                            once: true
+                        }
+                    );
+
+                    window.addEventListener(
+                        "pisadabacana:firestore-error",
+                        event => {
+
+                            clearTimeout(timeout);
+
+                            reject(
+                                event.detail?.error ||
+                                new Error(
+                                    "No se pudo iniciar Firebase."
+                                )
+                            );
+                        },
+                        {
+                            once: true
+                        }
+                    );
+                }
+            );
+        }
+
+        orders =
+            await getDatabase()
+                .getOrders();
+
+        renderEverything();
+
+    } catch (error) {
+
+        console.error(
+            "Error cargando Caja desde Firestore:",
+            error
+        );
+    }
 }
 
 
