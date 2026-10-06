@@ -2,19 +2,28 @@
 
 /* =====================================================
    PISADA BACANA
-   GENERADOR DE NOTAS DE SERVICIO
+   NOTA DE SERVICIO
 ===================================================== */
 
-(function () {
+(() => {
 
-    const ORDERS_STORAGE_KEY =
-        "pisadaBacanaOrders";
-
-    const SETTINGS_STORAGE_KEY =
-        "pisadaBacanaSettings";
+    let currentNoteOrderId =
+        null;
 
 
-    let currentNoteOrderId = null;
+    /* =================================================
+       FIRESTORE
+    ================================================= */
+
+    function getDatabase() {
+        if (!window.PisadaBacanaDB) {
+            throw new Error(
+                "Firebase todavía no está listo."
+            );
+        }
+
+        return window.PisadaBacanaDB;
+    }
 
 
     /* =================================================
@@ -22,50 +31,50 @@
     ================================================= */
 
     function escapeHTML(value) {
-
         return String(value ?? "")
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
-
     }
 
 
-    function formatMoney(value) {
-
-        return new Intl.NumberFormat(
-            "es-MX",
-            {
-                style: "currency",
-                currency: "MXN",
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }
-        ).format(
-            Number(value) || 0
-        );
-
+    function formatMoney(
+        value,
+        currency = "MXN"
+    ) {
+        try {
+            return new Intl.NumberFormat(
+                "es-MX",
+                {
+                    style: "currency",
+                    currency,
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            ).format(
+                Number(value) || 0
+            );
+        } catch {
+            return `$${Number(value || 0).toFixed(2)}`;
+        }
     }
 
 
     function formatNoteDate(value) {
-
         if (!value) {
             return "Sin fecha";
         }
 
-
         let date;
 
-
         if (
-            /^\d{4}-\d{2}-\d{2}$/.test(
-                String(value)
-            )
+            /^\d{4}-\d{2}-\d{2}$/
+                .test(
+                    String(value)
+                )
         ) {
-
             const [
                 year,
                 month,
@@ -75,7 +84,6 @@
                     .split("-")
                     .map(Number);
 
-
             date =
                 new Date(
                     year,
@@ -84,23 +92,17 @@
                 );
 
         } else {
-
             date =
                 new Date(value);
-
         }
-
 
         if (
             Number.isNaN(
                 date.getTime()
             )
         ) {
-
             return "Sin fecha";
-
         }
-
 
         return new Intl.DateTimeFormat(
             "es-MX",
@@ -112,121 +114,72 @@
         )
             .format(date)
             .replace(".", "");
-
-    }
-
-
-    function loadOrders() {
-
-        try {
-
-            const stored =
-                localStorage.getItem(
-                    ORDERS_STORAGE_KEY
-                );
-
-
-            if (!stored) {
-                return [];
-            }
-
-
-            const parsed =
-                JSON.parse(stored);
-
-
-            return Array.isArray(parsed)
-                ? parsed
-                : [];
-
-        } catch (error) {
-
-            console.error(
-                "No fue posible cargar los pedidos:",
-                error
-            );
-
-            return [];
-
-        }
-
-    }
-
-
-    function loadSettings() {
-
-        try {
-
-            const stored =
-                localStorage.getItem(
-                    SETTINGS_STORAGE_KEY
-                );
-
-
-            if (!stored) {
-                return {};
-            }
-
-
-            const parsed =
-                JSON.parse(stored);
-
-
-            return (
-                parsed &&
-                typeof parsed === "object"
-            )
-                ? parsed
-                : {};
-
-        } catch (error) {
-
-            console.error(
-                "No fue posible cargar los ajustes:",
-                error
-            );
-
-            return {};
-
-        }
-
     }
 
 
     /* =================================================
-       PEDIDOS
+       PEDIDO
     ================================================= */
 
-    function findOrder(orderId) {
+    async function findOrder(orderId) {
+        const value =
+            String(orderId || "")
+                .trim();
 
+        if (!value) {
+            return null;
+        }
+
+        const database =
+            getDatabase();
+
+        /*
+            Primero por ID real de Firestore.
+        */
+        try {
+            const directOrder =
+                await database
+                    .getOrder(value);
+
+            if (directOrder) {
+                return directOrder;
+            }
+        } catch (error) {
+            console.warn(
+                "No se encontró directamente por ID:",
+                error
+            );
+        }
+
+        /*
+            El botón del drawer también puede
+            enviar el folio visible.
+        */
         const orders =
-            loadOrders();
-
+            await database
+                .getOrders();
 
         return (
             orders.find(
                 order =>
                     String(order.id) ===
-                    String(orderId)
+                    value
             ) ||
             orders.find(
                 order =>
                     String(order.code) ===
-                    String(orderId)
+                    value
             ) ||
             null
         );
-
     }
 
 
     function getOrderItems(order) {
-
         if (
             Array.isArray(order.items) &&
             order.items.length
         ) {
-
             return order.items.map(
                 item => ({
                     itemType:
@@ -255,49 +208,42 @@
                         )
                 })
             );
-
         }
 
+        return [{
+            itemType:
+                order.itemType ||
+                "Artículo",
 
-        return [
-            {
-                itemType:
-                    order.itemType ||
-                    "Artículo",
+            brand:
+                order.brand || "",
 
-                brand:
-                    order.brand || "",
+            model:
+                order.model || "",
 
-                model:
-                    order.model || "",
+            color:
+                order.color || "",
 
-                color:
-                    order.color || "",
+            service:
+                order.service ||
+                "Servicio",
 
-                service:
-                    order.service ||
-                    "Servicio",
-
-                price:
-                    Math.max(
-                        Number(
-                            order.price || 0
-                        ),
-                        0
-                    )
-            }
-        ];
-
+            price:
+                Math.max(
+                    Number(
+                        order.price || 0
+                    ),
+                    0
+                )
+        }];
     }
 
 
     function getOrderTotal(order) {
-
         if (
             Array.isArray(order.items) &&
             order.items.length
         ) {
-
             return order.items.reduce(
                 (total, item) =>
                     total +
@@ -309,45 +255,60 @@
                     ),
                 0
             );
-
         }
-
 
         return Math.max(
             Number(
-                order.price || 0
+                order.total ??
+                order.price ??
+                0
             ),
             0
         );
-
     }
 
 
     function getPaidAmount(order) {
+        if (
+            Array.isArray(
+                order.payments
+            )
+        ) {
+            return order.payments.reduce(
+                (total, payment) =>
+                    total +
+                    Math.max(
+                        Number(
+                            payment.amount || 0
+                        ),
+                        0
+                    ),
+                0
+            );
+        }
 
         return Math.max(
             Number(
-                order.advance || 0
+                order.paid ??
+                order.advance ??
+                0
             ),
             0
         );
-
     }
 
 
     function getBalance(order) {
-
         return Math.max(
             getOrderTotal(order) -
             getPaidAmount(order),
             0
         );
-
     }
 
 
     /* =================================================
-       DATOS DEL NEGOCIO
+       NEGOCIO
     ================================================= */
 
     function firstValue(
@@ -355,40 +316,26 @@
         keys,
         fallback = ""
     ) {
-
         for (const key of keys) {
-
             if (
                 object &&
                 object[key] !== undefined &&
                 object[key] !== null &&
-                String(object[key]).trim() !== ""
+                String(
+                    object[key]
+                ).trim() !== ""
             ) {
-
                 return object[key];
-
             }
-
         }
 
-
         return fallback;
-
     }
 
 
-    function getBusinessData() {
-
-        const settings =
-            loadSettings();
-
-
-        /*
-            Se buscan varias estructuras para mantener
-            compatibilidad con diferentes versiones
-            del módulo Ajustes.
-        */
-
+    function getBusinessData(
+        settings = {}
+    ) {
         const business =
             settings.business ||
             settings.company ||
@@ -396,9 +343,7 @@
             settings.businessInfo ||
             settings;
 
-
         return {
-
             name:
                 firstValue(
                     business,
@@ -409,7 +354,7 @@
                         "nombre",
                         "nombreNegocio"
                     ],
-                    "Pisada Bacana Sneaker Cleaning"
+                    "Pisada Bacana"
                 ),
 
             address:
@@ -420,7 +365,7 @@
                         "street",
                         "direccion"
                     ],
-                    "Blvd. Jardin De Las Orquideas #3168"
+                    ""
                 ),
 
             address2:
@@ -431,7 +376,7 @@
                         "neighborhood",
                         "colonia"
                     ],
-                    "Jardines Del Rey"
+                    ""
                 ),
 
             city:
@@ -441,7 +386,7 @@
                         "city",
                         "ciudad"
                     ],
-                    "Culiacan, Sinaloa. Sinaloa 80025"
+                    ""
                 ),
 
             country:
@@ -451,7 +396,7 @@
                         "country",
                         "pais"
                     ],
-                    "Mexico"
+                    ""
                 ),
 
             phone:
@@ -462,7 +407,7 @@
                         "telefono",
                         "businessPhone"
                     ],
-                    "6671400648"
+                    ""
                 ),
 
             email:
@@ -473,7 +418,28 @@
                         "correo",
                         "businessEmail"
                     ],
-                    "pisadabacana@gmail.com"
+                    ""
+                ),
+
+            instagram:
+                firstValue(
+                    business,
+                    [
+                        "instagram",
+                        "social",
+                        "redSocial"
+                    ],
+                    ""
+                ),
+
+            message:
+                firstValue(
+                    business,
+                    [
+                        "message",
+                        "mensaje"
+                    ],
+                    "Gracias por confiar en Pisada Bacana."
                 ),
 
             logo:
@@ -487,67 +453,49 @@
                     ],
                     ""
                 )
-
         };
-
     }
 
 
-    /* =================================================
-       TÉRMINOS
-    ================================================= */
-
-    function getTerms() {
-
-        const settings =
-            loadSettings();
-
-
+    function getTerms(
+        settings = {}
+    ) {
         if (
-            Array.isArray(settings.terms) &&
+            Array.isArray(
+                settings.terms
+            ) &&
             settings.terms.length
         ) {
-
             return settings.terms
                 .map(String)
                 .filter(Boolean);
-
         }
-
 
         if (
             Array.isArray(
                 settings.business?.terms
             ) &&
-            settings.business.terms.length
+            settings.business
+                .terms.length
         ) {
-
-            return settings.business.terms
+            return settings.business
+                .terms
                 .map(String)
                 .filter(Boolean);
-
         }
 
-
         return [
-            "Recepción: Todo calzado o gorra se recibe bajo revisión previa. Los detalles de desgaste, manchas fijas o daños previos se anotan en este comprobante.",
-
+            "Recepción: Todo calzado o gorra se recibe bajo revisión previa. Los detalles de desgaste, manchas fijas o daños previos se consideran parte de la condición de recepción.",
             "Calzado o prendas olvidadas: Pasados 30 días a partir de la fecha estimada de entrega, no nos hacemos responsables por el deterioro, pérdida o resguardo de las prendas.",
-
             "Resultados: Hacemos nuestro mejor esfuerzo por eliminar manchas y suciedad, pero el resultado final depende del material, antigüedad y condición previa del artículo.",
-
             "Garantía: Tienes 48 horas a partir de la entrega para señalar cualquier disconformidad con el servicio realizado."
         ];
-
     }
 
 
-    /* =================================================
-       DESCRIPCIÓN DE ARTÍCULO
-    ================================================= */
-
-    function buildItemDescription(item) {
-
+    function buildItemDescription(
+        item
+    ) {
         const parts = [
             item.brand,
             item.model,
@@ -561,46 +509,37 @@
             )
             .filter(Boolean);
 
-
         if (
-            parts.length === 0 &&
+            !parts.length &&
             item.itemType
         ) {
-
             parts.push(
                 item.itemType
             );
-
         }
 
-
         return parts.join(" ");
-
     }
 
 
     /* =================================================
-       CREAR MODAL
+       MODAL
     ================================================= */
 
     function ensureNoteModal() {
-
         let modal =
             document.getElementById(
                 "serviceNoteModal"
             );
 
-
         if (modal) {
             return modal;
         }
-
 
         modal =
             document.createElement(
                 "div"
             );
-
 
         modal.id =
             "serviceNoteModal";
@@ -608,12 +547,9 @@
         modal.className =
             "note-modal";
 
-
         modal.innerHTML = `
             <div class="note-toolbar">
-
                 <div class="note-toolbar-title">
-
                     <span>
                         COMPROBANTE DE SERVICIO
                     </span>
@@ -621,12 +557,9 @@
                     <strong id="noteToolbarCode">
                         Nota
                     </strong>
-
                 </div>
 
-
                 <div class="note-toolbar-actions">
-
                     <button
                         type="button"
                         class="note-toolbar-button primary"
@@ -634,7 +567,6 @@
                     >
                         Imprimir / Guardar PDF
                     </button>
-
 
                     <button
                         type="button"
@@ -644,27 +576,19 @@
                     >
                         ×
                     </button>
-
                 </div>
-
             </div>
 
-
             <div class="note-preview-area">
-
                 <article
                     class="service-note"
                     id="serviceNote"
                 ></article>
-
             </div>
         `;
 
-
-        document.body.appendChild(
-            modal
-        );
-
+        document.body
+            .appendChild(modal);
 
         document
             .getElementById(
@@ -675,7 +599,6 @@
                 closeServiceNote
             );
 
-
         document
             .getElementById(
                 "printServiceNoteButton"
@@ -685,9 +608,7 @@
                 printServiceNote
             );
 
-
         return modal;
-
     }
 
 
@@ -695,21 +616,33 @@
        RENDER
     ================================================= */
 
-    function renderServiceNote(order) {
-
+    function renderServiceNote(
+        order,
+        settings = {}
+    ) {
         const note =
             document.getElementById(
                 "serviceNote"
             );
 
-
         if (!note) {
             return;
         }
 
-
         const business =
-            getBusinessData();
+            getBusinessData(
+                settings
+            );
+
+        const terms =
+            getTerms(
+                settings
+            );
+
+        const currency =
+            settings.orders
+                ?.currency ||
+            "MXN";
 
         const items =
             getOrderItems(order);
@@ -725,10 +658,6 @@
 
         const balance =
             getBalance(order);
-
-        const terms =
-            getTerms();
-
 
         const logoHTML =
             business.logo
@@ -750,27 +679,22 @@
                     </div>
                 `;
 
-
         const itemsHTML =
             items
                 .map(
                     (item, index) => {
-
                         const description =
                             buildItemDescription(
                                 item
                             );
 
-
                         return `
                             <tr>
-
                                 <td>
                                     ${index + 1}
                                 </td>
 
                                 <td>
-
                                     <span
                                         class="note-item-service"
                                     >
@@ -787,7 +711,6 @@
                                             item.itemType
                                         )}
                                     </span>
-
                                 </td>
 
                                 <td>
@@ -795,24 +718,23 @@
                                 </td>
 
                                 <td>
-                                    ${Number(
-                                        item.price || 0
-                                    ).toFixed(2)}
+                                    ${formatMoney(
+                                        item.price,
+                                        currency
+                                    )}
                                 </td>
 
                                 <td>
-                                    ${Number(
-                                        item.price || 0
-                                    ).toFixed(2)}
+                                    ${formatMoney(
+                                        item.price,
+                                        currency
+                                    )}
                                 </td>
-
                             </tr>
                         `;
-
                     }
                 )
                 .join("");
-
 
         const termsHTML =
             terms
@@ -825,21 +747,12 @@
                 )
                 .join("");
 
-
         note.innerHTML = `
-
-            <!-- ==========================
-                 HEADER
-            =========================== -->
-
             <header class="note-header">
-
                 <div>
-
                     <div class="note-company-logo">
                         ${logoHTML}
                     </div>
-
 
                     <div class="note-company-name">
                         ${escapeHTML(
@@ -847,183 +760,113 @@
                         )}
                     </div>
 
-
                     <div class="note-company-info">
-
                         ${
                             business.address
-                                ? `
-                                    <span>
-                                        ${escapeHTML(
-                                            business.address
-                                        )}
-                                    </span>
-                                `
+                                ? `<span>${escapeHTML(
+                                    business.address
+                                )}</span>`
                                 : ""
                         }
 
                         ${
                             business.address2
-                                ? `
-                                    <span>
-                                        ${escapeHTML(
-                                            business.address2
-                                        )}
-                                    </span>
-                                `
+                                ? `<span>${escapeHTML(
+                                    business.address2
+                                )}</span>`
                                 : ""
                         }
 
                         ${
                             business.city
-                                ? `
-                                    <span>
-                                        ${escapeHTML(
-                                            business.city
-                                        )}
-                                    </span>
-                                `
+                                ? `<span>${escapeHTML(
+                                    business.city
+                                )}</span>`
                                 : ""
                         }
 
                         ${
                             business.country
-                                ? `
-                                    <span>
-                                        ${escapeHTML(
-                                            business.country
-                                        )}
-                                    </span>
-                                `
+                                ? `<span>${escapeHTML(
+                                    business.country
+                                )}</span>`
                                 : ""
                         }
 
                         ${
                             business.phone
-                                ? `
-                                    <span>
-                                        ${escapeHTML(
-                                            business.phone
-                                        )}
-                                    </span>
-                                `
+                                ? `<span>${escapeHTML(
+                                    business.phone
+                                )}</span>`
                                 : ""
                         }
 
                         ${
                             business.email
-                                ? `
-                                    <span>
-                                        ${escapeHTML(
-                                            business.email
-                                        )}
-                                    </span>
-                                `
+                                ? `<span>${escapeHTML(
+                                    business.email
+                                )}</span>`
                                 : ""
                         }
 
+                        ${
+                            business.instagram
+                                ? `<span>${escapeHTML(
+                                    business.instagram
+                                )}</span>`
+                                : ""
+                        }
                     </div>
-
                 </div>
-
 
                 <div class="note-document-info">
+                    <span>
+                        COMPROBANTE DE SERVICIO
+                    </span>
 
-                    <h1>
-                        NOTA
-                    </h1>
-
-                    <div class="note-document-code">
-                        # ${escapeHTML(
+                    <strong>
+                        ${escapeHTML(
                             order.code ||
-                            "SIN-FOLIO"
+                            "Sin folio"
                         )}
-                    </div>
+                    </strong>
 
-                    <div class="note-balance-label">
-                        Saldo adeudado
-                    </div>
-
-                    <div class="note-balance-value">
-                        ${formatMoney(
-                            balance
+                    <small>
+                        ${formatNoteDate(
+                            order.createdAt
                         )}
-                    </div>
-
+                    </small>
                 </div>
-
             </header>
 
-
-            <!-- ==========================
-                 CLIENTE / FECHAS
-            =========================== -->
-
-            <section class="note-meta-section">
-
-                <div>
-
-                    <div class="note-client-label">
-                        Cliente
-                    </div>
-
-                    <div class="note-client-name">
-                        ${escapeHTML(
-                            order.clientName ||
-                            "CLIENTE"
-                        )}
-                    </div>
-
-                    <div class="note-client-phone">
-                        ${escapeHTML(
-                            order.phone || ""
-                        )}
-                    </div>
-
+            <section class="note-section">
+                <div class="note-section-title">
+                    DATOS DEL CLIENTE
                 </div>
 
-
-                <div class="note-dates">
-
-                    <div class="note-date-row">
-
-                        <span>
-                            Fecha de recepción :
-                        </span>
-
+                <div class="note-client-grid">
+                    <div>
+                        <span>Cliente</span>
                         <strong>
                             ${escapeHTML(
-                                formatNoteDate(
-                                    order.createdAt
-                                )
+                                order.clientName ||
+                                "Sin cliente"
                             )}
                         </strong>
-
                     </div>
 
-
-                    <div class="note-date-row">
-
-                        <span>
-                            Estado :
-                        </span>
-
+                    <div>
+                        <span>Teléfono</span>
                         <strong>
                             ${escapeHTML(
-                                order.status ||
-                                "Recibido"
+                                order.phone ||
+                                "Sin teléfono"
                             )}
                         </strong>
-
                     </div>
 
-
-                    <div class="note-date-row">
-
-                        <span>
-                            Fecha de entrega :
-                        </span>
-
+                    <div>
+                        <span>Fecha estimada de entrega</span>
                         <strong>
                             ${escapeHTML(
                                 formatNoteDate(
@@ -1031,175 +874,132 @@
                                 )
                             )}
                         </strong>
-
                     </div>
 
+                    <div>
+                        <span>Estado</span>
+                        <strong>
+                            ${escapeHTML(
+                                order.status ||
+                                "Recibido"
+                            )}
+                        </strong>
+                    </div>
                 </div>
-
             </section>
 
+            <section class="note-section">
+                <div class="note-section-title">
+                    SERVICIOS
+                </div>
 
-            <!-- ==========================
-                 ARTÍCULOS
-            =========================== -->
+                <div class="note-table-wrap">
+                    <table class="note-items-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Descripción</th>
+                                <th>Cant.</th>
+                                <th>Precio</th>
+                                <th>Importe</th>
+                            </tr>
+                        </thead>
 
-            <table class="note-table">
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-                <thead>
+            ${
+                order.notes
+                    ? `
+                        <section class="note-section">
+                            <div class="note-section-title">
+                                OBSERVACIONES
+                            </div>
 
-                    <tr>
+                            <div class="note-observations">
+                                ${escapeHTML(
+                                    order.notes
+                                )}
+                            </div>
+                        </section>
+                    `
+                    : ""
+            }
 
-                        <th>#</th>
+            <section class="note-summary">
+                <div class="note-payment-info">
+                    <span>
+                        Método de pago
+                    </span>
 
-                        <th>
-                            Artículo &amp; Descripción
-                        </th>
-
-                        <th>Cant.</th>
-
-                        <th>Tarifa</th>
-
-                        <th>Cantidad</th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-                    ${itemsHTML}
-                </tbody>
-
-            </table>
-
-
-            <!-- ==========================
-                 TOTALES
-            =========================== -->
-
-            <div class="note-totals-wrapper">
+                    <strong>
+                        ${escapeHTML(
+                            order.paymentMethod ||
+                            "No especificado"
+                        )}
+                    </strong>
+                </div>
 
                 <div class="note-totals">
-
-                    <div class="note-total-row">
-
-                        <span>
-                            Subtotal
-                        </span>
-
-                        <span>
-                            ${formatMoney(total)}
-                        </span>
-
+                    <div>
+                        <span>Total</span>
+                        <strong>
+                            ${formatMoney(
+                                total,
+                                currency
+                            )}
+                        </strong>
                     </div>
 
-
-                    <div class="note-total-row total">
-
-                        <span>
-                            Total
-                        </span>
-
-                        <span>
-                            ${formatMoney(total)}
-                        </span>
-
+                    <div>
+                        <span>Pagado</span>
+                        <strong>
+                            ${formatMoney(
+                                paid,
+                                currency
+                            )}
+                        </strong>
                     </div>
 
-
-                    <div class="note-total-row advance">
-
-                        <span>
-                            Anticipo / Pagado
-                        </span>
-
-                        <span>
-                            ${formatMoney(paid)}
-                        </span>
-
+                    <div class="note-balance">
+                        <span>Saldo</span>
+                        <strong>
+                            ${formatMoney(
+                                balance,
+                                currency
+                            )}
+                        </strong>
                     </div>
-
-
-                    <div class="note-total-row balance">
-
-                        <span>
-                            Saldo adeudado
-                        </span>
-
-                        <span>
-                            ${formatMoney(balance)}
-                        </span>
-
-                    </div>
-
                 </div>
+            </section>
 
-            </div>
-
-
-            <!-- ==========================
-                 NOTAS / TÉRMINOS
-            =========================== -->
-
-            <div class="note-bottom-content">
-
+            <section class="note-terms">
                 <div class="note-section-title">
-                    Notas
+                    TÉRMINOS DEL SERVICIO
                 </div>
 
+                <ol>
+                    ${termsHTML}
+                </ol>
 
-                <div class="note-customer-notes">
-
-                    ${
-                        order.notes
-                            ? escapeHTML(
-                                order.notes
-                            )
-                            : "Gracias por su confianza."
-                    }
-
+                <div class="note-terms-confirmation">
+                    Al entregar tus prendas aceptas
+                    y confirmas la conformidad con
+                    estos términos.
                 </div>
-
-
-                <div class="note-terms">
-
-                    <div class="note-terms-heading">
-                        Términos y condiciones
-                    </div>
-
-                    <div class="note-terms-subtitle">
-                        TÉRMINOS Y CONDICIONES DEL SERVICIO
-                    </div>
-
-
-                    <ol>
-                        ${termsHTML}
-                    </ol>
-
-
-                    <div class="note-acceptance">
-                        *Al entregar tus prendas aceptas y confirmas la conformidad con estos términos.*
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- ==========================
-                 FOOTER
-            =========================== -->
+            </section>
 
             <footer class="note-footer">
-
-                Gracias por confiar en
-                <strong>
-                    Pisada Bacana
-                </strong>.
-
+                ${escapeHTML(
+                    business.message ||
+                    "Gracias por confiar en Pisada Bacana."
+                )}
             </footer>
         `;
-
     }
 
 
@@ -1207,154 +1007,139 @@
        ABRIR / CERRAR
     ================================================= */
 
-    function openServiceNote(orderId) {
+    async function openServiceNote(
+        orderId
+    ) {
+        try {
+            const database =
+                getDatabase();
 
-        const order =
-            findOrder(orderId);
+            const [
+                order,
+                settings
+            ] =
+                await Promise.all([
+                    findOrder(orderId),
+                    database.getSettings()
+                ]);
 
+            if (!order) {
+                window.alert(
+                    "No se encontró el pedido."
+                );
+                return;
+            }
 
-        if (!order) {
+            const modal =
+                ensureNoteModal();
 
+            currentNoteOrderId =
+                order.id;
+
+            renderServiceNote(
+                order,
+                settings || {}
+            );
+
+            const toolbarCode =
+                document.getElementById(
+                    "noteToolbarCode"
+                );
+
+            if (toolbarCode) {
+                toolbarCode.textContent =
+                    `Nota ${order.code || ""}`;
+            }
+
+            modal.classList.add(
+                "visible"
+            );
+
+            document.body.classList.add(
+                "no-scroll"
+            );
+
+        } catch (error) {
             console.error(
-                "No se encontró el pedido:",
-                orderId
+                "No se pudo consultar la nota:",
+                error
             );
 
-            return;
-
-        }
-
-
-        const modal =
-            ensureNoteModal();
-
-
-        currentNoteOrderId =
-            order.id;
-
-
-        renderServiceNote(order);
-
-
-        const toolbarCode =
-            document.getElementById(
-                "noteToolbarCode"
+            window.alert(
+                "No se pudo cargar la nota desde Firebase."
             );
-
-
-        if (toolbarCode) {
-
-            toolbarCode.textContent =
-                `Nota ${order.code || ""}`;
-
         }
-
-
-        modal.classList.add(
-            "visible"
-        );
-
-
-        document.body.classList.add(
-            "no-scroll"
-        );
-
     }
 
 
     function closeServiceNote() {
-
         const modal =
             document.getElementById(
                 "serviceNoteModal"
             );
 
-
         if (!modal) {
             return;
         }
-
 
         modal.classList.remove(
             "visible"
         );
 
-
-        currentNoteOrderId = null;
-
-
-        /*
-            No quitamos no-scroll si otro
-            modal/drawer del sistema sigue abierto.
-        */
+        currentNoteOrderId =
+            null;
 
         const otherOpenElement =
             document.querySelector(
                 ".modal.visible, .drawer.visible, .sidebar.open"
             );
 
-
         if (!otherOpenElement) {
-
             document.body.classList.remove(
                 "no-scroll"
             );
-
         }
-
     }
 
 
-    /* =================================================
-       IMPRESIÓN / PDF
-    ================================================= */
-
     function printServiceNote() {
-
         if (!currentNoteOrderId) {
             return;
         }
 
-
         window.print();
-
     }
 
 
     /* =================================================
-       BOTÓN PARA DRAWER
+       BOTÓN EN DRAWER
     ================================================= */
 
     function createDrawerNoteButton() {
-
-        const drawerFooter =
+        const footer =
             document.querySelector(
                 "#orderDrawer .drawer-footer"
             );
 
-
-        if (!drawerFooter) {
+        if (!footer) {
             return;
         }
 
-
         if (
             document.getElementById(
-                "printOrderNoteButton"
+                "openServiceNoteButton"
             )
         ) {
             return;
         }
-
 
         const button =
             document.createElement(
                 "button"
             );
 
-
         button.id =
-            "printOrderNoteButton";
+            "openServiceNoteButton";
 
         button.type =
             "button";
@@ -1363,82 +1148,71 @@
             "secondary-button";
 
         button.textContent =
-            "Ver / imprimir nota";
-
+            "Nota de servicio";
 
         button.addEventListener(
             "click",
             () => {
-
-                /*
-                    pedidos.js mantiene el ID
-                    seleccionado internamente.
-                    Lo obtenemos del folio visible
-                    para evitar acoplar ambos módulos.
-                */
-
                 const codeElement =
                     document.getElementById(
                         "detailOrderCode"
                     );
 
-
-                if (!codeElement) {
-                    return;
-                }
-
-
                 const code =
-                    codeElement.textContent
-                        .trim();
-
+                    String(
+                        codeElement?.textContent ||
+                        ""
+                    ).trim();
 
                 if (!code) {
+                    window.alert(
+                        "No se encontró el folio del pedido."
+                    );
                     return;
                 }
 
-
-                openServiceNote(code);
-
+                openServiceNote(
+                    code
+                );
             }
         );
 
-
-        /*
-            Se coloca antes del botón
-            Guardar cambios.
-        */
-
-        const saveButton =
-            document.getElementById(
-                "saveOrderChangesButton"
-            );
-
-
-        if (saveButton) {
-
-            drawerFooter.insertBefore(
-                button,
-                saveButton
-            );
-
-        } else {
-
-            drawerFooter.appendChild(
-                button
-            );
-
-        }
-
+        footer.insertBefore(
+            button,
+            footer.firstChild
+        );
     }
 
 
     /* =================================================
-       EXPONER API
+       EVENTOS
+    ================================================= */
+
+    document.addEventListener(
+        "keydown",
+        event => {
+            if (
+                event.key === "Escape" &&
+                document
+                    .getElementById(
+                        "serviceNoteModal"
+                    )
+                    ?.classList
+                    .contains(
+                        "visible"
+                    )
+            ) {
+                closeServiceNote();
+            }
+        }
+    );
+
+
+    /* =================================================
+       API PÚBLICA
     ================================================= */
 
     window.PisadaBacanaNote = {
-
         open:
             openServiceNote,
 
@@ -1447,7 +1221,6 @@
 
         print:
             printServiceNote
-
     };
 
 
@@ -1456,11 +1229,8 @@
     ================================================= */
 
     function initialize() {
-
         ensureNoteModal();
-
         createDrawerNoteButton();
-
     }
 
 
@@ -1468,16 +1238,13 @@
         document.readyState ===
         "loading"
     ) {
-
         document.addEventListener(
             "DOMContentLoaded",
-            initialize
+            initialize,
+            { once: true }
         );
-
     } else {
-
         initialize();
-
     }
 
 })();

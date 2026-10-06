@@ -9,11 +9,56 @@ import {
 } from "./database.js";
 
 
+/* =====================================================
+   ESTADO GLOBAL
+===================================================== */
+
+window.PisadaBacanaData = {
+    orders: [],
+    settings: null
+};
+
+
 let unsubscribeOrders = null;
+let unsubscribeSettings = null;
 
 
 /* =====================================================
-   INICIALIZACIÓN
+   EVENTOS
+===================================================== */
+
+function dispatchOrdersUpdated(orders) {
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "pisadabacana:orders-updated",
+            {
+                detail: {
+                    orders
+                }
+            }
+        )
+    );
+}
+
+
+function dispatchSettingsUpdated(settings) {
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "pisadabacana:settings-updated",
+            {
+                detail: {
+                    settings
+                }
+            }
+        )
+    );
+}
+
+
+/* =====================================================
+   FIRESTORE
 ===================================================== */
 
 async function initializeFirebaseData() {
@@ -22,69 +67,114 @@ async function initializeFirebaseData() {
 
         await ensureAnonymousSession();
 
-        const migration =
-            await PisadaBacanaDB
-                .migrateLocalDataOnce();
+        /*
+            Importación histórica.
 
-        if (
-            migration.migrated
-        ) {
+            Si este navegador ya fue migrado,
+            database.js no vuelve a importar
+            los datos antiguos.
+        */
 
-            console.log(
-                "Migración a Firestore completada:",
-                migration
-            );
+        await PisadaBacanaDB
+            .migrateLocalDataOnce();
 
-        }
 
         /*
-            Firestore → espejo local temporal.
+            Lectura inicial.
+        */
 
-            Esto mantiene funcionando Dashboard,
-            Clientes, Caja, Reportes y Nota mientras
-            terminamos su conversión individual.
+        const [
+            orders,
+            settings
+        ] =
+            await Promise.all([
+                PisadaBacanaDB.getOrders(),
+                PisadaBacanaDB.getSettings()
+            ]);
+
+
+        window.PisadaBacanaData.orders =
+            orders;
+
+        window.PisadaBacanaData.settings =
+            settings;
+
+
+        /*
+            Suscripción a pedidos.
         */
 
         unsubscribeOrders =
-            PisadaBacanaDB
-                .subscribeOrders(
-                    orders => {
+            PisadaBacanaDB.subscribeOrders(
+                firestoreOrders => {
 
-                        console.log(
-                            `Firestore sincronizado: ${orders.length} pedidos.`
-                        );
+                    window.PisadaBacanaData.orders =
+                        firestoreOrders;
 
-                    }
-                );
-
-        /*
-            También sincronizamos Ajustes.
-        */
-
-        const settings =
-            await PisadaBacanaDB
-                .getSettings();
-
-        if (settings) {
-
-            localStorage.setItem(
-                "pisadaBacanaSettings",
-                JSON.stringify(
-                    settings
-                )
+                    dispatchOrdersUpdated(
+                        firestoreOrders
+                    );
+                }
             );
 
-        }
+
+        /*
+            Suscripción a configuración.
+        */
+
+        unsubscribeSettings =
+            PisadaBacanaDB.subscribeSettings(
+                firestoreSettings => {
+
+                    window.PisadaBacanaData.settings =
+                        firestoreSettings;
+
+                    dispatchSettingsUpdated(
+                        firestoreSettings
+                    );
+                }
+            );
+
+
+        document.documentElement
+            .classList.remove(
+                "firestore-error"
+            );
 
         document.documentElement
             .classList.add(
                 "firestore-ready"
             );
 
+
         window.dispatchEvent(
             new CustomEvent(
-                "pisadabacana:firestore-ready"
+                "pisadabacana:firestore-ready",
+                {
+                    detail: {
+                        orders,
+                        settings
+                    }
+                }
             )
+        );
+
+
+        /*
+            También notificamos los datos iniciales.
+        */
+
+        dispatchOrdersUpdated(
+            orders
+        );
+
+        dispatchSettingsUpdated(
+            settings
+        );
+
+
+        console.log(
+            `Firestore listo: ${orders.length} pedidos.`
         );
 
     } catch (error) {
@@ -94,10 +184,17 @@ async function initializeFirebaseData() {
             error
         );
 
+
+        document.documentElement
+            .classList.remove(
+                "firestore-ready"
+            );
+
         document.documentElement
             .classList.add(
                 "firestore-error"
             );
+
 
         window.dispatchEvent(
             new CustomEvent(
@@ -109,9 +206,7 @@ async function initializeFirebaseData() {
                 }
             )
         );
-
     }
-
 }
 
 
@@ -119,21 +214,41 @@ async function initializeFirebaseData() {
    LIMPIEZA
 ===================================================== */
 
+function stopSubscriptions() {
+
+    if (
+        typeof unsubscribeOrders ===
+        "function"
+    ) {
+
+        unsubscribeOrders();
+
+        unsubscribeOrders =
+            null;
+    }
+
+
+    if (
+        typeof unsubscribeSettings ===
+        "function"
+    ) {
+
+        unsubscribeSettings();
+
+        unsubscribeSettings =
+            null;
+    }
+}
+
+
 window.addEventListener(
     "pagehide",
-    () => {
-
-        if (
-            typeof unsubscribeOrders ===
-            "function"
-        ) {
-
-            unsubscribeOrders();
-
-        }
-
-    }
+    stopSubscriptions
 );
 
+
+/* =====================================================
+   INICIO
+===================================================== */
 
 initializeFirebaseData();

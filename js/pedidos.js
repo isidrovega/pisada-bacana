@@ -1,47 +1,59 @@
 "use strict";
 
-function getDatabase() {
-
-    if (
-        !window.PisadaBacanaDB
-    ) {
-
-        throw new Error(
-            "Firebase todavía no está listo."
-        );
-
-    }
-
-    return window.PisadaBacanaDB;
-
-}
-
 /* =====================================================
    FIRESTORE
 ===================================================== */
 
 function getDatabase() {
-
-    if (
-        !window.PisadaBacanaDB
-    ) {
-
-        throw new Error(
-            "Firebase todavía no está listo."
-        );
-
+    if (!window.PisadaBacanaDB) {
+        throw new Error("Firebase todavía no está listo.");
     }
 
     return window.PisadaBacanaDB;
-
 }
+
+function waitForFirestore() {
+    if (window.PisadaBacanaDB) {
+        return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            reject(
+                new Error(
+                    "Firebase tardó demasiado en iniciar."
+                )
+            );
+        }, 10000);
+
+        window.addEventListener(
+            "pisadabacana:firestore-ready",
+            () => {
+                clearTimeout(timeout);
+                resolve();
+            },
+            { once: true }
+        );
+
+        window.addEventListener(
+            "pisadabacana:firestore-error",
+            event => {
+                clearTimeout(timeout);
+
+                reject(
+                    event.detail?.error ||
+                    new Error("Error de Firebase.")
+                );
+            },
+            { once: true }
+        );
+    });
+}
+
 
 /* =====================================================
    CONFIGURACIÓN
 ===================================================== */
-
-const STORAGE_KEY = "pisadaBacanaOrders";
-const SETTINGS_STORAGE_KEY = "pisadaBacanaSettings";
 
 const STATUS_CLASSES = {
     "Recibido": "status-received",
@@ -88,14 +100,12 @@ const DEFAULT_SERVICES = [
    ESTADO
 ===================================================== */
 
-let orders = loadOrders();
+let orders = [];
+let appSettings = null;
 
 let selectedOrderId = null;
-
 let activeStatusFilter = "Todos";
-
 let newOrderItems = [];
-
 let toastTimer = null;
 
 
@@ -282,133 +292,43 @@ const toastMessage =
 
 
 /* =====================================================
-   STORAGE
-===================================================== */
-
-function loadOrders() {
-
-    try {
-
-        const stored =
-            localStorage.getItem(STORAGE_KEY);
-
-        if (!stored) {
-            return [];
-        }
-
-        const parsed =
-            JSON.parse(stored);
-
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
-
-    } catch (error) {
-
-        console.error(
-            "Error cargando pedidos:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
-
-
-function saveOrders() {
-
-    /*
-        Ya no guardamos el array completo aquí.
-
-        Firestore es la fuente principal.
-        firebase-bootstrap.js mantiene automáticamente
-        el espejo local para compatibilidad.
-    */
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(
-            orders
-        )
-    );
-
-}
-
-
-function loadSettings() {
-
-    try {
-
-        const stored =
-            localStorage.getItem(
-                SETTINGS_STORAGE_KEY
-            );
-
-        if (!stored) {
-            return null;
-        }
-
-        const parsed =
-            JSON.parse(stored);
-
-        return (
-            parsed &&
-            typeof parsed === "object"
-        )
-            ? parsed
-            : null;
-
-    } catch (error) {
-
-        console.error(
-            "Error cargando ajustes:",
-            error
-        );
-
-        return null;
-
-    }
-
-}
-
-
-/* =====================================================
    UTILIDADES
 ===================================================== */
 
 function escapeHTML(value) {
-
     return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
-
 }
 
 
 function formatMoney(value) {
+    const currency =
+        appSettings?.orders?.currency ||
+        "MXN";
 
-    return new Intl.NumberFormat(
-        "es-MX",
-        {
-            style: "currency",
-            currency: "MXN",
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        }
-    ).format(
-        Number(value) || 0
-    );
-
+    try {
+        return new Intl.NumberFormat(
+            "es-MX",
+            {
+                style: "currency",
+                currency,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            }
+        ).format(
+            Number(value) || 0
+        );
+    } catch {
+        return `$${Number(value || 0).toFixed(2)}`;
+    }
 }
 
 
 function normalizeText(value) {
-
     return String(value || "")
         .trim()
         .toLowerCase();
@@ -416,31 +336,23 @@ function normalizeText(value) {
 
 
 function createId(prefix = "id") {
-
     if (
         window.crypto &&
         typeof window.crypto.randomUUID === "function"
     ) {
-
-        return window.crypto.randomUUID();
-
+        return `${prefix}-${window.crypto.randomUUID()}`;
     }
 
     return (
-        prefix +
-        "-" +
-        Date.now() +
-        "-" +
+        `${prefix}-${Date.now()}-` +
         Math.random()
             .toString(16)
             .slice(2)
     );
-
 }
 
 
 function getLocalISODate(date = new Date()) {
-
     return [
         date.getFullYear(),
         String(
@@ -450,12 +362,10 @@ function getLocalISODate(date = new Date()) {
             date.getDate()
         ).padStart(2, "0")
     ].join("-");
-
 }
 
 
 function formatDate(value) {
-
     if (!value) {
         return "Sin fecha";
     }
@@ -493,11 +403,13 @@ function formatDate(value) {
             year: "numeric"
         }
     ).format(date);
-
 }
 
 
 function setCurrentDate() {
+    if (!currentDate) {
+        return;
+    }
 
     currentDate.textContent =
         new Intl.DateTimeFormat(
@@ -511,29 +423,37 @@ function setCurrentDate() {
         ).format(
             new Date()
         );
-
 }
 
 
-function getSettingsServices() {
+/* =====================================================
+   AJUSTES FIRESTORE
+===================================================== */
 
+function getSettingsServices() {
     const settings =
-        loadSettings();
+        appSettings ||
+        window.PisadaBacanaData?.settings;
 
     if (
         settings &&
         Array.isArray(settings.services) &&
         settings.services.length
     ) {
-
         return settings.services
             .filter(
                 service =>
                     service &&
-                    service.name
+                    String(
+                        service.name || ""
+                    ).trim()
             )
             .map(
                 service => ({
+                    id:
+                        service.id ||
+                        createId("service"),
+
                     name:
                         String(
                             service.name
@@ -548,58 +468,67 @@ function getSettingsServices() {
                         ),
 
                     type:
-                        service.type ||
-                        "Ambos"
+                        ["Tenis", "Gorra", "Ambos"]
+                            .includes(
+                                service.type
+                            )
+                            ? service.type
+                            : "Ambos"
                 })
             );
-
     }
 
     return DEFAULT_SERVICES;
-
 }
 
 
 function getOrderSettings() {
-
     const settings =
-        loadSettings();
+        appSettings ||
+        window.PisadaBacanaData?.settings ||
+        {};
 
     return {
-
         folioPrefix:
-            settings?.orders?.folioPrefix ||
+            String(
+                settings.orders
+                    ?.folioPrefix ||
+                "PB"
+            )
+                .toUpperCase()
+                .replace(
+                    /[^A-Z0-9]/g,
+                    ""
+                ) ||
             "PB",
 
         defaultDeliveryDays:
             Math.max(
                 Number(
-                    settings?.orders
-                        ?.defaultDeliveryDays ?? 3
+                    settings.orders
+                        ?.defaultDeliveryDays ??
+                    3
                 ),
                 0
             ),
 
         initialStatus:
-            settings?.orders?.initialStatus ||
+            settings.orders
+                ?.initialStatus ||
             "Recibido"
-
     };
-
 }
 
 
 /* =====================================================
-   COMPATIBILIDAD CON PEDIDOS ANTERIORES
+   PEDIDOS / PAGOS
 ===================================================== */
 
 function getOrderItems(order) {
-
     if (
         Array.isArray(order.items) &&
-        order.items.length > 0
+        order.items.length
     ) {
-
         return order.items.map(
             item => ({
                 id:
@@ -632,58 +561,45 @@ function getOrderItems(order) {
                     )
             })
         );
-
     }
 
+    return [{
+        id:
+            createId("legacy"),
 
-    /*
-        PEDIDO VIEJO:
-        convertimos virtualmente los campos
-        antiguos en un artículo.
-    */
+        itemType:
+            order.itemType ||
+            "Tenis",
 
-    return [
-        {
-            id:
-                createId("legacy"),
+        brand:
+            order.brand || "",
 
-            itemType:
-                order.itemType ||
-                "Tenis",
+        model:
+            order.model || "",
 
-            brand:
-                order.brand || "",
+        color:
+            order.color || "",
 
-            model:
-                order.model || "",
+        service:
+            order.service ||
+            "Sin especificar",
 
-            color:
-                order.color || "",
-
-            service:
-                order.service ||
-                "Sin especificar",
-
-            price:
-                Math.max(
-                    Number(
-                        order.price || 0
-                    ),
-                    0
-                )
-        }
-    ];
-
+        price:
+            Math.max(
+                Number(
+                    order.price || 0
+                ),
+                0
+            )
+    }];
 }
 
 
 function getOrderTotal(order) {
-
     if (
         Array.isArray(order.items) &&
-        order.items.length > 0
+        order.items.length
     ) {
-
         return order.items.reduce(
             (total, item) =>
                 total +
@@ -695,119 +611,61 @@ function getOrderTotal(order) {
                 ),
             0
         );
-
     }
 
     return Math.max(
         Number(
-            order.price || 0
+            order.total ??
+            order.price ??
+            0
         ),
         0
     );
+}
 
+
+function getPaidAmount(order) {
+    if (
+        Array.isArray(order.payments)
+    ) {
+        return order.payments.reduce(
+            (total, payment) =>
+                total +
+                Math.max(
+                    Number(
+                        payment.amount || 0
+                    ),
+                    0
+                ),
+            0
+        );
+    }
+
+    return Math.max(
+        Number(
+            order.paid ??
+            order.advance ??
+            0
+        ),
+        0
+    );
 }
 
 
 function getOrderBalance(order) {
-
-    const total =
-        getOrderTotal(order);
-
-    const paid =
-        Math.max(
-            Number(
-                order.advance || 0
-            ),
-            0
-        );
-
     return Math.max(
-        total - paid,
+        getOrderTotal(order) -
+        getPaidAmount(order),
         0
     );
-
 }
 
 
 /* =====================================================
-   FOLIO
-===================================================== */
-
-function generateOrderCode() {
-
-    const settings =
-        getOrderSettings();
-
-    const prefix =
-        String(
-            settings.folioPrefix || "PB"
-        )
-            .toUpperCase()
-            .replace(
-                /[^A-Z0-9]/g,
-                ""
-            ) || "PB";
-
-
-    let maxNumber = 0;
-
-
-    orders.forEach(
-        order => {
-
-            const code =
-                String(
-                    order.code || ""
-                );
-
-
-            const match =
-                code.match(
-                    /(\d+)$/
-                );
-
-
-            if (!match) {
-                return;
-            }
-
-
-            const number =
-                Number(match[1]);
-
-
-            if (
-                Number.isFinite(number)
-            ) {
-
-                maxNumber =
-                    Math.max(
-                        maxNumber,
-                        number
-                    );
-
-            }
-
-        }
-    );
-
-
-    return (
-        `${prefix}-` +
-        String(
-            maxNumber + 1
-        ).padStart(4, "0")
-    );
-
-}
-
-
-/* =====================================================
-   FECHA ENTREGA
+   FECHA DE ENTREGA
 ===================================================== */
 
 function setDefaultDeliveryDate() {
-
     const settings =
         getOrderSettings();
 
@@ -821,16 +679,14 @@ function setDefaultDeliveryDate() {
 
     deliveryDate.value =
         getLocalISODate(date);
-
 }
 
 
 /* =====================================================
-   NUEVOS ARTÍCULOS
+   ARTÍCULOS NUEVOS
 ===================================================== */
 
 function createBlankItem() {
-
     const services =
         getSettingsServices();
 
@@ -841,7 +697,6 @@ function createBlankItem() {
                 service.type === "Ambos"
         ) ||
         services[0];
-
 
     return {
         id:
@@ -863,60 +718,21 @@ function createBlankItem() {
             firstService?.name || "",
 
         price:
-            Number(
-                firstService?.price || 0
+            Math.max(
+                Number(
+                    firstService?.price || 0
+                ),
+                0
             )
     };
-
-}
-
-
-function addNewOrderItem() {
-
-    newOrderItems.push(
-        createBlankItem()
-    );
-
-    renderNewOrderItems();
-
-}
-
-
-function removeNewOrderItem(id) {
-
-    if (
-        newOrderItems.length <= 1
-    ) {
-
-        showToast(
-            "El pedido debe tener al menos un artículo.",
-            true
-        );
-
-        return;
-
-    }
-
-
-    newOrderItems =
-        newOrderItems.filter(
-            item =>
-                item.id !== id
-        );
-
-
-    renderNewOrderItems();
-
 }
 
 
 function getServicesForItemType(
     itemType
 ) {
-
     const services =
         getSettingsServices();
-
 
     const filtered =
         services.filter(
@@ -925,11 +741,9 @@ function getServicesForItemType(
                 service.type === "Ambos"
         );
 
-
     return filtered.length
         ? filtered
         : services;
-
 }
 
 
@@ -937,30 +751,22 @@ function buildServiceOptions(
     itemType,
     selectedService
 ) {
-
     const services =
         getServicesForItemType(
             itemType
         );
 
-
-    const hasSelected =
-        services.some(
-            service =>
-                service.name ===
-                selectedService
-        );
-
-
     let available =
         [...services];
 
-
     if (
         selectedService &&
-        !hasSelected
+        !available.some(
+            service =>
+                service.name ===
+                selectedService
+        )
     ) {
-
         available.unshift({
             name:
                 selectedService,
@@ -971,65 +777,79 @@ function buildServiceOptions(
             type:
                 itemType
         });
-
     }
-
 
     return available
         .map(
             service => `
                 <option
-                    value="${escapeHTML(
-                        service.name
-                    )}"
+                    value="${escapeHTML(service.name)}"
+                    data-price="${Number(service.price || 0)}"
                     ${
                         service.name ===
                         selectedService
                             ? "selected"
                             : ""
                     }
-                    data-price="${Number(
-                        service.price || 0
-                    )}"
                 >
-                    ${escapeHTML(
-                        service.name
-                    )}
+                    ${escapeHTML(service.name)}
                 </option>
             `
         )
         .join("");
+}
 
+
+function addNewOrderItem() {
+    newOrderItems.push(
+        createBlankItem()
+    );
+
+    renderNewOrderItems();
+}
+
+
+function removeNewOrderItem(id) {
+    if (
+        newOrderItems.length <= 1
+    ) {
+        showToast(
+            "El pedido debe tener al menos un artículo.",
+            true
+        );
+
+        return;
+    }
+
+    newOrderItems =
+        newOrderItems.filter(
+            item =>
+                item.id !== id
+        );
+
+    renderNewOrderItems();
 }
 
 
 function renderNewOrderItems() {
-
     orderItems.innerHTML = "";
-
 
     newOrderItems.forEach(
         (item, index) => {
-
             const card =
                 document.createElement(
                     "div"
                 );
 
-
             card.className =
                 "order-item-card";
-
 
             card.dataset.id =
                 item.id;
 
-
             card.innerHTML = `
                 <div class="order-item-header">
-
                     <div class="order-item-title">
-
                         <div class="order-item-number">
                             ${index + 1}
                         </div>
@@ -1037,7 +857,6 @@ function renderNewOrderItems() {
                         <strong>
                             Artículo ${index + 1}
                         </strong>
-
                     </div>
 
                     <button
@@ -1052,121 +871,78 @@ function renderNewOrderItems() {
                     >
                         ×
                     </button>
-
                 </div>
 
-
                 <div class="order-item-body">
-
                     <div class="item-field full">
-
-                        <label>
-                            Tipo de artículo
-                        </label>
+                        <label>Tipo de artículo</label>
 
                         <div class="item-type-selector">
-
                             <label class="item-type-option">
-
                                 <input
                                     type="radio"
-                                    name="itemType-${escapeHTML(
-                                        item.id
-                                    )}"
+                                    name="itemType-${escapeHTML(item.id)}"
                                     value="Tenis"
                                     ${
-                                        item.itemType ===
-                                        "Tenis"
+                                        item.itemType === "Tenis"
                                             ? "checked"
                                             : ""
                                     }
                                 >
-
                                 <span>Tenis</span>
-
                             </label>
-
 
                             <label class="item-type-option">
-
                                 <input
                                     type="radio"
-                                    name="itemType-${escapeHTML(
-                                        item.id
-                                    )}"
+                                    name="itemType-${escapeHTML(item.id)}"
                                     value="Gorra"
                                     ${
-                                        item.itemType ===
-                                        "Gorra"
+                                        item.itemType === "Gorra"
                                             ? "checked"
                                             : ""
                                     }
                                 >
-
                                 <span>Gorra</span>
-
                             </label>
-
                         </div>
-
                     </div>
 
-
                     <div class="item-field">
-
                         <label>Marca</label>
-
                         <input
                             class="item-brand"
                             type="text"
                             maxlength="60"
                             placeholder="Nike, Adidas, New Era..."
-                            value="${escapeHTML(
-                                item.brand
-                            )}"
+                            value="${escapeHTML(item.brand)}"
                         >
-
                     </div>
 
-
                     <div class="item-field">
-
                         <label>Modelo</label>
-
                         <input
                             class="item-model"
                             type="text"
                             maxlength="80"
                             placeholder="Modelo"
-                            value="${escapeHTML(
-                                item.model
-                            )}"
+                            value="${escapeHTML(item.model)}"
                         >
-
                     </div>
 
-
                     <div class="item-field">
-
                         <label>Color</label>
-
                         <input
                             class="item-color"
                             type="text"
                             maxlength="60"
                             placeholder="Color"
-                            value="${escapeHTML(
-                                item.color
-                            )}"
+                            value="${escapeHTML(item.color)}"
                         >
-
                     </div>
 
-
                     <div class="item-field">
-
                         <label>Servicio *</label>
-
                         <select
                             class="item-service"
                             required
@@ -1176,48 +952,34 @@ function renderNewOrderItems() {
                                 item.service
                             )}
                         </select>
-
                     </div>
 
-
                     <div class="item-field full">
-
                         <label>Precio *</label>
-
                         <input
                             class="item-price"
                             type="number"
                             min="0"
                             step="0.01"
                             required
-                            value="${Number(
-                                item.price || 0
-                            )}"
-                            placeholder="0.00"
+                            value="${Number(item.price || 0)}"
                         >
-
                     </div>
-
                 </div>
             `;
-
 
             bindNewItemEvents(
                 card,
                 item
             );
 
-
             orderItems.appendChild(
                 card
             );
-
         }
     );
 
-
     updateOrderTotals();
-
 }
 
 
@@ -1225,7 +987,6 @@ function bindNewItemEvents(
     card,
     item
 ) {
-
     const typeInputs =
         card.querySelectorAll(
             'input[type="radio"]'
@@ -1261,121 +1022,95 @@ function bindNewItemEvents(
             ".remove-item-button"
         );
 
-
     typeInputs.forEach(
         input => {
-
             input.addEventListener(
                 "change",
                 event => {
-
                     item.itemType =
                         event.target.value;
-
 
                     const services =
                         getServicesForItemType(
                             item.itemType
                         );
 
-
                     const first =
                         services[0];
-
 
                     item.service =
                         first?.name || "";
 
                     item.price =
-                        Number(
-                            first?.price || 0
+                        Math.max(
+                            Number(
+                                first?.price || 0
+                            ),
+                            0
                         );
 
-
                     renderNewOrderItems();
-
                 }
             );
-
         }
     );
-
 
     brandInput.addEventListener(
         "input",
         event => {
-
             item.brand =
                 event.target.value;
-
         }
     );
-
 
     modelInput.addEventListener(
         "input",
         event => {
-
             item.model =
                 event.target.value;
-
         }
     );
-
 
     colorInput.addEventListener(
         "input",
         event => {
-
             item.color =
                 event.target.value;
-
         }
     );
-
 
     serviceSelect.addEventListener(
         "change",
         event => {
-
             item.service =
                 event.target.value;
 
-
-            const selectedOption =
+            const option =
                 event.target
                     .selectedOptions[0];
 
-
-            if (selectedOption) {
-
-                const configuredPrice =
+            const configuredPrice =
+                Math.max(
                     Number(
-                        selectedOption.dataset
-                            .price || 0
-                    );
+                        option?.dataset
+                            ?.price || 0
+                    ),
+                    0
+                );
 
+            item.price =
+                configuredPrice;
 
-                item.price =
-                    configuredPrice;
-
-
-                priceInput.value =
-                    configuredPrice;
-
-            }
-
+            priceInput.value =
+                configuredPrice;
 
             updateOrderTotals();
-
         }
     );
-
 
     priceInput.addEventListener(
         "input",
         event => {
-
             item.price =
                 Math.max(
                     Number(
@@ -1384,24 +1119,18 @@ function bindNewItemEvents(
                     0
                 );
 
-
             updateOrderTotals();
-
         }
     );
-
 
     removeButton.addEventListener(
         "click",
         () => {
-
             removeNewOrderItem(
                 item.id
             );
-
         }
     );
-
 }
 
 
@@ -1410,7 +1139,6 @@ function bindNewItemEvents(
 ===================================================== */
 
 function getNewOrderTotal() {
-
     return newOrderItems.reduce(
         (total, item) =>
             total +
@@ -1422,12 +1150,10 @@ function getNewOrderTotal() {
             ),
         0
     );
-
 }
 
 
 function updateOrderTotals() {
-
     const total =
         getNewOrderTotal();
 
@@ -1445,10 +1171,8 @@ function updateOrderTotals() {
             0
         );
 
-
     const count =
         newOrderItems.length;
-
 
     itemsCounter.textContent =
         `${count} ${
@@ -1457,22 +1181,17 @@ function updateOrderTotals() {
                 : "artículos"
         }`;
 
-
     summaryItemsCount.textContent =
         count;
-
 
     orderTotalPreview.textContent =
         formatMoney(total);
 
-
     advancePreview.textContent =
         formatMoney(advance);
 
-
     balancePreview.textContent =
         formatMoney(balance);
-
 }
 
 
@@ -1481,36 +1200,27 @@ function updateOrderTotals() {
 ===================================================== */
 
 function openOrderModal() {
-
     orderForm.reset();
-
 
     const settings =
         getOrderSettings();
 
-
     orderStatus.value =
         settings.initialStatus;
 
-
     orderAdvance.value =
         "0";
-
 
     newOrderItems = [
         createBlankItem()
     ];
 
-
     setDefaultDeliveryDate();
-
     renderNewOrderItems();
-
 
     orderModal.classList.add(
         "visible"
     );
-
 
     updateOverlay();
 
@@ -1518,33 +1228,50 @@ function openOrderModal() {
         "no-scroll"
     );
 
-
     setTimeout(
         () => {
-
             clientName.focus();
-
         },
         100
     );
-
 }
 
 
 function closeOrderModal() {
-
     orderModal.classList.remove(
         "visible"
     );
 
-
     newOrderItems = [];
 
-
     updateOverlay();
-
     updateBodyScroll();
+}
 
+
+function openRequestedNewOrder() {
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    if (
+        params.get("nuevo") !== "1"
+    ) {
+        return;
+    }
+
+    openOrderModal();
+
+    const cleanURL =
+        window.location.pathname +
+        window.location.hash;
+
+    window.history.replaceState(
+        {},
+        document.title,
+        cleanURL
+    );
 }
 
 
@@ -1553,22 +1280,16 @@ function closeOrderModal() {
 ===================================================== */
 
 async function createOrder(event) {
-
     event.preventDefault();
 
-    if (
-        newOrderItems.length === 0
-    ) {
-
+    if (!newOrderItems.length) {
         showToast(
             "Agrega al menos un artículo.",
             true
         );
 
         return;
-
     }
-
 
     const cleanItems =
         newOrderItems.map(
@@ -1612,25 +1333,19 @@ async function createOrder(event) {
             })
         );
 
-
-    const invalidItem =
-        cleanItems.find(
+    if (
+        cleanItems.some(
             item =>
                 !item.service
-        );
-
-
-    if (invalidItem) {
-
+        )
+    ) {
         showToast(
             "Todos los artículos necesitan un servicio.",
             true
         );
 
         return;
-
     }
-
 
     const total =
         cleanItems.reduce(
@@ -1640,7 +1355,6 @@ async function createOrder(event) {
             0
         );
 
-
     const advance =
         Math.max(
             Number(
@@ -1649,50 +1363,44 @@ async function createOrder(event) {
             0
         );
 
-
     if (advance > total) {
-
         showToast(
             "El anticipo no puede ser mayor al total.",
             true
         );
 
         return;
-
     }
 
-
     try {
-
         const database =
             getDatabase();
 
+        const orderSettings =
+            getOrderSettings();
 
         const code =
             await database
                 .getNextOrderCode(
-                    "PB"
+                    orderSettings.folioPrefix
                 );
-
 
         const now =
             new Date()
                 .toISOString();
 
-
         const payments =
             advance > 0
                 ? [{
                     id:
-                        createId(
-                            "payment"
-                        ),
+                        createId("payment"),
 
                     amount:
                         advance,
 
                     method:
-                        paymentMethod.value,
+                        paymentMethod.value ||
+                        "Efectivo",
 
                     type:
                         "Anticipo",
@@ -1702,35 +1410,34 @@ async function createOrder(event) {
                 }]
                 : [];
 
-
         const order = {
-
             id:
-                createId(
-                    "order"
-                ),
+                createId("order"),
 
             code,
 
             clientName:
-                clientName.value.trim(),
+                clientName.value
+                    .trim(),
 
             phone:
-                clientPhone.value.trim(),
+                clientPhone.value
+                    .trim(),
 
             items:
                 cleanItems,
 
+            total,
             price:
                 total,
+
+            payments,
 
             paid:
                 advance,
 
-            /*
-                Compatibilidad temporal.
-            */
-            advance,
+            advance:
+                advance,
 
             balance:
                 Math.max(
@@ -1738,19 +1445,20 @@ async function createOrder(event) {
                     0
                 ),
 
-            payments,
-
             paymentMethod:
-                paymentMethod.value,
+                paymentMethod.value ||
+                "Efectivo",
 
             status:
-                orderStatus.value,
+                orderStatus.value ||
+                orderSettings.initialStatus,
 
             deliveryDate:
                 deliveryDate.value,
 
             notes:
-                orderNotes.value.trim(),
+                orderNotes.value
+                    .trim(),
 
             createdAt:
                 now,
@@ -1759,139 +1467,99 @@ async function createOrder(event) {
                 now
         };
 
-
         order.itemType =
-            cleanItems[0]
-                .itemType;
+            cleanItems[0].itemType;
 
         order.brand =
-            cleanItems[0]
-                .brand;
+            cleanItems[0].brand;
 
         order.model =
-            cleanItems[0]
-                .model;
+            cleanItems[0].model;
 
         order.color =
-            cleanItems[0]
-                .color;
+            cleanItems[0].color;
 
         order.service =
             cleanItems.length === 1
-                ? cleanItems[0]
-                    .service
+                ? cleanItems[0].service
                 : `${cleanItems.length} artículos`;
 
-
-        await database
-            .saveOrder(
-                order
-            );
-
-
-        /*
-            Actualizamos inmediatamente la UI.
-            El listener de Firestore volverá a
-            sincronizar el array después.
-        */
+        await database.saveOrder(
+            order
+        );
 
         orders =
-            await database
-                .getOrders();
-
+            await database.getOrders();
 
         closeOrderModal();
-
         renderEverything();
 
-
         showToast(
-            `${order.code} creado con ${cleanItems.length} ${
+            `${code} creado con ${cleanItems.length} ${
                 cleanItems.length === 1
                     ? "artículo"
                     : "artículos"
             }.`
         );
 
-
         setTimeout(
             () => {
-
                 if (
                     window.PisadaBacanaNote &&
                     typeof window
                         .PisadaBacanaNote
-                        .open ===
-                        "function"
+                        .open === "function"
                 ) {
-
                     window
                         .PisadaBacanaNote
-                        .open(
-                            order.id
-                        );
-
+                        .open(order.id);
                 }
-
             },
             180
         );
 
     } catch (error) {
-
         console.error(
             "Error creando pedido:",
             error
         );
 
-
         showToast(
             "No se pudo guardar el pedido en Firebase.",
             true
         );
-
     }
-
 }
 
+
 /* =====================================================
-   FILTRADO
+   FILTROS
 ===================================================== */
 
 function getFilteredOrders() {
-
     const search =
         normalizeText(
             searchInput.value
         );
 
-
     return orders.filter(
         order => {
-
             const statusMatches =
                 activeStatusFilter ===
                     "Todos" ||
                 order.status ===
                     activeStatusFilter;
 
-
             if (!statusMatches) {
                 return false;
             }
-
 
             if (!search) {
                 return true;
             }
 
-
-            const items =
-                getOrderItems(order);
-
-
             const itemText =
-                items
+                getOrderItems(order)
                     .map(
                         item => [
                             item.itemType,
@@ -1905,43 +1573,28 @@ function getFilteredOrders() {
                     )
                     .join(" ");
 
-
-            const searchable =
-                normalizeText(
-                    [
-                        order.code,
-                        order.clientName,
-                        order.phone,
-                        order.status,
-                        itemText
-                    ]
-                        .filter(Boolean)
-                        .join(" ")
-                );
-
-
-            return searchable.includes(
-                search
-            );
-
+            return normalizeText(
+                [
+                    order.code,
+                    order.clientName,
+                    order.phone,
+                    order.status,
+                    itemText
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+            ).includes(search);
         }
     );
-
 }
 
 
 function sortOrders(list) {
-
     const sorted =
         [...list];
 
-
-    switch (
-        sortSelect.value
-    ) {
-
+    switch (sortSelect.value) {
         case "oldest":
-
             sorted.sort(
                 (a, b) =>
                     new Date(
@@ -1951,15 +1604,11 @@ function sortOrders(list) {
                         b.createdAt || 0
                     )
             );
-
             break;
 
-
         case "delivery":
-
             sorted.sort(
                 (a, b) => {
-
                     if (
                         !a.deliveryDate &&
                         !b.deliveryDate
@@ -1975,36 +1624,27 @@ function sortOrders(list) {
                         return -1;
                     }
 
-                    return (
+                    return String(
+                        a.deliveryDate
+                    ).localeCompare(
                         String(
-                            a.deliveryDate
-                        ).localeCompare(
-                            String(
-                                b.deliveryDate
-                            )
+                            b.deliveryDate
                         )
                     );
-
                 }
             );
-
             break;
 
-
         case "price":
-
             sorted.sort(
                 (a, b) =>
                     getOrderTotal(b) -
                     getOrderTotal(a)
             );
-
             break;
-
 
         case "newest":
         default:
-
             sorted.sort(
                 (a, b) =>
                     new Date(
@@ -2014,30 +1654,23 @@ function sortOrders(list) {
                         a.createdAt || 0
                     )
             );
-
-            break;
-
     }
 
-
     return sorted;
-
 }
 
 
 /* =====================================================
-   ESTADÍSTICAS
+   STATS
 ===================================================== */
 
 function renderStats() {
-
     const active =
         orders.filter(
             order =>
                 order.status !==
                 "Entregado"
         );
-
 
     const process =
         orders.filter(
@@ -2048,7 +1681,6 @@ function renderStats() {
                     "Secando"
         );
 
-
     const ready =
         orders.filter(
             order =>
@@ -2056,35 +1688,28 @@ function renderStats() {
                 "Listo"
         );
 
-
     const pending =
-        active.reduce(
+        orders.reduce(
             (total, order) =>
                 total +
                 getOrderBalance(order),
             0
         );
 
-
     activeOrdersCount.textContent =
         active.length;
-
 
     processOrdersCount.textContent =
         process.length;
 
-
     readyOrdersCount.textContent =
         ready.length;
-
 
     pendingBalance.textContent =
         formatMoney(pending);
 
-
     navOrderCount.textContent =
         active.length;
-
 }
 
 
@@ -2093,72 +1718,31 @@ function renderStats() {
 ===================================================== */
 
 function getItemsSummary(items) {
-
-    if (
-        items.length === 0
-    ) {
-
-        return "Sin artículos";
-
-    }
-
-
-    if (
-        items.length === 1
-    ) {
-
-        const item =
-            items[0];
-
-
-        return (
-            [
-                item.brand,
-                item.model
-            ]
-                .filter(Boolean)
-                .join(" ") ||
-            item.itemType ||
-            "Artículo"
-        );
-
-    }
-
-
     const tenis =
         items.filter(
             item =>
-                item.itemType ===
-                "Tenis"
+                item.itemType !== "Gorra"
         ).length;
-
 
     const gorras =
         items.filter(
             item =>
-                item.itemType ===
-                "Gorra"
+                item.itemType === "Gorra"
         ).length;
-
 
     const parts = [];
 
-
     if (tenis) {
-
         parts.push(
             `${tenis} ${
                 tenis === 1
-                    ? "tenis"
-                    : "tenis"
-            }`
+                    ? "par"
+                    : "pares"
+            } de tenis`
         );
-
     }
 
-
     if (gorras) {
-
         parts.push(
             `${gorras} ${
                 gorras === 1
@@ -2166,62 +1750,46 @@ function getItemsSummary(items) {
                     : "gorras"
             }`
         );
-
     }
-
 
     return (
         parts.join(" · ") ||
         `${items.length} artículos`
     );
-
 }
 
 
 function renderOrders() {
-
     ordersTableBody.innerHTML =
         "";
-
 
     const filtered =
         sortOrders(
             getFilteredOrders()
         );
 
-
-    if (
-        filtered.length === 0
-    ) {
-
+    if (!filtered.length) {
         emptyState.classList.add(
             "visible"
         );
 
         return;
-
     }
-
 
     emptyState.classList.remove(
         "visible"
     );
 
-
     filtered.forEach(
         order => {
-
             const items =
                 getOrderItems(order);
-
 
             const total =
                 getOrderTotal(order);
 
-
             const balance =
                 getOrderBalance(order);
-
 
             const statusClass =
                 STATUS_CLASSES[
@@ -2229,28 +1797,22 @@ function renderOrders() {
                 ] ||
                 "status-received";
 
-
             const row =
                 document.createElement(
                     "tr"
                 );
 
-
             row.innerHTML = `
                 <td>
-
                     <span class="order-code">
                         ${escapeHTML(
                             order.code ||
                             "Sin folio"
                         )}
                     </span>
-
                 </td>
 
-
                 <td>
-
                     <span class="cell-main">
                         ${escapeHTML(
                             order.clientName ||
@@ -2263,20 +1825,15 @@ function renderOrders() {
                             order.phone || ""
                         )}
                     </span>
-
                 </td>
 
-
                 <td class="items-cell">
-
                     <div class="items-summary">
-
                         <span class="item-count-badge">
                             ${items.length}
                         </span>
 
                         <div>
-
                             <span class="cell-main">
                                 ${escapeHTML(
                                     getItemsSummary(
@@ -2289,22 +1846,16 @@ function renderOrders() {
                                 ${
                                     items.length === 1
                                         ? escapeHTML(
-                                            items[0]
-                                                .service
+                                            items[0].service
                                         )
                                         : `${items.length} artículos en el pedido`
                                 }
                             </span>
-
                         </div>
-
                     </div>
-
                 </td>
 
-
                 <td>
-
                     <span
                         class="status-pill ${statusClass}"
                     >
@@ -2313,12 +1864,9 @@ function renderOrders() {
                             "Recibido"
                         )}
                     </span>
-
                 </td>
 
-
                 <td>
-
                     <span
                         class="payment-pill ${
                             balance <= 0
@@ -2334,9 +1882,7 @@ function renderOrders() {
                                 )
                         }
                     </span>
-
                 </td>
-
 
                 <td>
                     ${escapeHTML(
@@ -2346,16 +1892,13 @@ function renderOrders() {
                     )}
                 </td>
 
-
                 <td>
                     <strong>
                         ${formatMoney(total)}
                     </strong>
                 </td>
 
-
                 <td>
-
                     <button
                         class="action-button"
                         type="button"
@@ -2366,18 +1909,13 @@ function renderOrders() {
                     >
                         ›
                     </button>
-
                 </td>
             `;
 
-
-            ordersTableBody.appendChild(
-                row
-            );
-
+            ordersTableBody
+                .appendChild(row);
         }
     );
-
 
     ordersTableBody
         .querySelectorAll(
@@ -2385,22 +1923,17 @@ function renderOrders() {
         )
         .forEach(
             button => {
-
                 button.addEventListener(
                     "click",
                     () => {
-
                         openOrderDetail(
                             button.dataset
                                 .orderId
                         );
-
                     }
                 );
-
             }
         );
-
 }
 
 
@@ -2409,136 +1942,101 @@ function renderOrders() {
 ===================================================== */
 
 function getSelectedOrder() {
-
     return orders.find(
         order =>
             String(order.id) ===
             String(selectedOrderId)
     ) || null;
-
 }
 
 
 function openOrderDetail(orderId) {
-
     selectedOrderId =
         orderId;
-
 
     const order =
         getSelectedOrder();
 
-
     if (!order) {
+        selectedOrderId =
+            null;
         return;
     }
-
 
     detailOrderCode.textContent =
         order.code ||
         "Sin folio";
 
-
     detailClientName.textContent =
         order.clientName ||
         "Sin cliente";
-
 
     detailClientPhone.textContent =
         order.phone ||
         "Sin teléfono";
 
-
     detailNotes.textContent =
         order.notes ||
         "Sin observaciones.";
-
 
     detailStatus.value =
         order.status ||
         "Recibido";
 
-
     detailDeliveryDate.value =
         order.deliveryDate || "";
-
 
     paymentAmount.value =
         "";
 
-
-    renderDetailItems(
-        order
-    );
-
-
-    renderDetailPayment(
-        order
-    );
-
-
-    renderProgress(
-        order.status
-    );
-
+    renderDetailItems(order);
+    renderDetailPayment(order);
+    renderProgress(order.status);
 
     orderDrawer.classList.add(
         "visible"
     );
-
 
     updateOverlay();
 
     document.body.classList.add(
         "no-scroll"
     );
-
 }
 
 
 function closeOrderDetail() {
-
     orderDrawer.classList.remove(
         "visible"
     );
 
-
-    selectedOrderId = null;
-
+    selectedOrderId =
+        null;
 
     updateOverlay();
-
     updateBodyScroll();
-
 }
 
 
 function renderDetailItems(order) {
-
     const items =
         getOrderItems(order);
-
 
     detailItemsCount.textContent =
         items.length;
 
-
     detailItems.innerHTML =
         "";
 
-
     items.forEach(
         (item, index) => {
-
             const card =
                 document.createElement(
                     "div"
                 );
 
-
             card.className =
                 "detail-item";
-
 
             const name =
                 [
@@ -2550,20 +2048,15 @@ function renderDetailItems(order) {
                 item.itemType ||
                 `Artículo ${index + 1}`;
 
-
             const meta = [
                 item.itemType,
                 item.color,
                 item.service
-            ]
-                .filter(Boolean);
-
+            ].filter(Boolean);
 
             card.innerHTML = `
                 <div class="detail-item-top">
-
                     <div class="detail-item-title">
-
                         <strong>
                             ${index + 1}.
                             ${escapeHTML(name)}
@@ -2575,7 +2068,6 @@ function renderDetailItems(order) {
                                 "Sin servicio"
                             )}
                         </span>
-
                     </div>
 
                     <span class="detail-item-price">
@@ -2583,51 +2075,35 @@ function renderDetailItems(order) {
                             item.price
                         )}
                     </span>
-
                 </div>
 
-
                 <div class="detail-item-meta">
-
                     ${meta
                         .map(
                             value => `
                                 <span>
-                                    ${escapeHTML(
-                                        value
-                                    )}
+                                    ${escapeHTML(value)}
                                 </span>
                             `
                         )
                         .join("")}
-
                 </div>
             `;
 
-
-            detailItems.appendChild(
-                card
-            );
-
+            detailItems
+                .appendChild(card);
         }
     );
-
 }
 
 
 function renderDetailPayment(order) {
-
     const total =
         getOrderTotal(order);
 
     const paid =
         Math.min(
-            Math.max(
-                Number(
-                    order.advance || 0
-                ),
-                0
-            ),
+            getPaidAmount(order),
             total
         );
 
@@ -2637,18 +2113,14 @@ function renderDetailPayment(order) {
             0
         );
 
-
     detailTotal.textContent =
         formatMoney(total);
-
 
     detailPaid.textContent =
         formatMoney(paid);
 
-
     detailBalance.textContent =
         formatMoney(balance);
-
 }
 
 
@@ -2657,109 +2129,90 @@ function renderDetailPayment(order) {
 ===================================================== */
 
 function renderProgress(status) {
-
     progressSteps.innerHTML =
         "";
 
-
     let normalizedStatus =
         status;
-
-
-    /*
-        "En espera" se encuentra
-        entre recibido y lavado.
-    */
 
     if (
         normalizedStatus ===
         "En espera"
     ) {
-
         normalizedStatus =
             "Recibido";
-
     }
 
+    if (
+        !PROGRESS_STATUSES.includes(
+            normalizedStatus
+        )
+    ) {
+        normalizedStatus =
+            "Recibido";
+    }
 
     const currentIndex =
         PROGRESS_STATUSES.indexOf(
             normalizedStatus
         );
 
-
     PROGRESS_STATUSES.forEach(
         (step, index) => {
-
             const element =
                 document.createElement(
                     "div"
                 );
 
-
             element.className =
                 "progress-step";
-
 
             if (
                 index < currentIndex
             ) {
-
                 element.classList.add(
                     "completed"
                 );
-
             }
-
 
             if (
                 index === currentIndex
             ) {
-
                 element.classList.add(
                     "current"
                 );
-
             }
-
 
             element.innerHTML = `
                 <div class="progress-dot"></div>
                 <span>${escapeHTML(step)}</span>
             `;
 
-
-            progressSteps.appendChild(
-                element
-            );
-
+            progressSteps
+                .appendChild(element);
         }
     );
-
 }
 
 
 /* =====================================================
    GUARDAR CAMBIOS
 ===================================================== */
-async function saveOrderChanges() {
 
+async function saveOrderChanges() {
     const order =
         getSelectedOrder();
 
     if (!order) {
-
         showToast(
             "No se encontró el pedido.",
             true
         );
 
         return;
-
     }
 
     try {
-
         const previousStatus =
             order.status;
 
@@ -2769,12 +2222,6 @@ async function saveOrderChanges() {
         order.deliveryDate =
             detailDeliveryDate.value;
 
-        /*
-            detailNotes es un <p> en tu HTML actual.
-            Las notas NO se editan desde el drawer,
-            por lo tanto conservamos order.notes.
-        */
-
         order.updatedAt =
             new Date()
                 .toISOString();
@@ -2783,32 +2230,25 @@ async function saveOrderChanges() {
             order.status === "Entregado" &&
             previousStatus !== "Entregado"
         ) {
-
             order.deliveredAt =
                 new Date()
                     .toISOString();
-
         }
 
         if (
             order.status !== "Entregado"
         ) {
-
             delete order.deliveredAt;
-
         }
 
         await getDatabase()
-            .saveOrder(
-                order
-            );
+            .saveOrder(order);
 
         orders =
             await getDatabase()
                 .getOrders();
 
         renderEverything();
-
         closeOrderDetail();
 
         showToast(
@@ -2816,7 +2256,6 @@ async function saveOrderChanges() {
         );
 
     } catch (error) {
-
         console.error(
             "Error actualizando pedido:",
             error
@@ -2826,29 +2265,25 @@ async function saveOrderChanges() {
             "No se pudieron guardar los cambios.",
             true
         );
-
     }
-
 }
+
 
 /* =====================================================
    REGISTRAR PAGO
 ===================================================== */
 
 async function registerPayment() {
-
     const order =
         getSelectedOrder();
 
     if (!order) {
-
         showToast(
             "No se encontró el pedido.",
             true
         );
 
         return;
-
     }
 
     const payment =
@@ -2860,38 +2295,30 @@ async function registerPayment() {
         !Number.isFinite(payment) ||
         payment <= 0
     ) {
-
         showToast(
             "Ingresa un pago válido.",
             true
         );
 
         return;
-
     }
 
     const balance =
-        getOrderBalance(
-            order
-        );
+        getOrderBalance(order);
 
-    if (
-        balance <= 0
-    ) {
-
+    if (balance <= 0) {
         showToast(
             "Este pedido ya está pagado.",
             true
         );
 
         return;
-
     }
 
     if (
-        payment > balance
+        payment >
+        balance + 0.005
     ) {
-
         showToast(
             `El pago no puede superar ${formatMoney(
                 balance
@@ -2900,11 +2327,9 @@ async function registerPayment() {
         );
 
         return;
-
     }
 
     try {
-
         const now =
             new Date()
                 .toISOString();
@@ -2914,24 +2339,12 @@ async function registerPayment() {
                 order.payments
             )
         ) {
-
             order.payments = [];
-
         }
-
-        /*
-            Tu drawer actual no tiene selector
-            de método de pago.
-
-            Por ahora usamos el método registrado
-            originalmente en el pedido.
-        */
 
         order.payments.push({
             id:
-                createId(
-                    "payment"
-                ),
+                createId("payment"),
 
             amount:
                 payment,
@@ -2948,26 +2361,15 @@ async function registerPayment() {
         });
 
         const paid =
-            order.payments.reduce(
-                (total, movement) =>
-                    total +
-                    Math.max(
-                        Number(
-                            movement.amount || 0
-                        ),
-                        0
-                    ),
-                0
-            );
+            getPaidAmount(order);
 
         order.paid =
             paid;
 
         /*
-            Compatibilidad temporal con Caja,
-            Dashboard y Reportes.
+            Se mantiene únicamente por compatibilidad
+            con registros/módulos históricos.
         */
-
         order.advance =
             paid;
 
@@ -2982,9 +2384,7 @@ async function registerPayment() {
             now;
 
         await getDatabase()
-            .saveOrder(
-                order
-            );
+            .saveOrder(order);
 
         orders =
             await getDatabase()
@@ -2996,12 +2396,14 @@ async function registerPayment() {
         renderEverything();
 
         /*
-            Volvemos a pintar el drawer con
-            los totales actualizados.
+            Conservamos el ID antes de volver
+            a dibujar el drawer.
         */
+        const orderId =
+            order.id;
 
         openOrderDetail(
-            order.id
+            orderId
         );
 
         showToast(
@@ -3011,7 +2413,6 @@ async function registerPayment() {
         );
 
     } catch (error) {
-
         console.error(
             "Error registrando pago:",
             error
@@ -3021,9 +2422,7 @@ async function registerPayment() {
             "No se pudo registrar el pago.",
             true
         );
-
     }
-
 }
 
 
@@ -3032,75 +2431,55 @@ async function registerPayment() {
 ===================================================== */
 
 async function deleteOrder() {
-
     const order =
         getSelectedOrder();
 
-
     if (!order) {
-
         showToast(
             "No se encontró el pedido.",
             true
         );
 
         return;
-
     }
-
 
     const confirmed =
         window.confirm(
             `¿Eliminar definitivamente ${order.code}?`
         );
 
-
     if (!confirmed) {
         return;
     }
 
-
     try {
-
         await getDatabase()
             .deleteOrder(
                 order.id
             );
 
-
         orders =
             await getDatabase()
                 .getOrders();
 
-
-        selectedOrderId =
-            null;
-
-
         closeOrderDetail();
-
         renderEverything();
-
 
         showToast(
             `${order.code} eliminado.`
         );
 
     } catch (error) {
-
         console.error(
             "Error eliminando pedido:",
             error
         );
 
-
         showToast(
             "No se pudo eliminar el pedido.",
             true
         );
-
     }
-
 }
 
 
@@ -3109,37 +2488,29 @@ async function deleteOrder() {
 ===================================================== */
 
 function openSidebar() {
-
     sidebar.classList.add(
         "open"
     );
-
 
     updateOverlay();
 
     document.body.classList.add(
         "no-scroll"
     );
-
 }
 
 
 function closeSidebar() {
-
     sidebar.classList.remove(
         "open"
     );
 
-
     updateOverlay();
-
     updateBodyScroll();
-
 }
 
 
 function updateOverlay() {
-
     const visible =
         sidebar.classList.contains(
             "open"
@@ -3151,17 +2522,14 @@ function updateOverlay() {
             "visible"
         );
 
-
     overlay.classList.toggle(
         "visible",
         visible
     );
-
 }
 
 
 function updateBodyScroll() {
-
     const shouldLock =
         sidebar.classList.contains(
             "open"
@@ -3173,12 +2541,10 @@ function updateBodyScroll() {
             "visible"
         );
 
-
     document.body.classList.toggle(
         "no-scroll",
         shouldLock
     );
-
 }
 
 
@@ -3190,43 +2556,33 @@ function showToast(
     message,
     isError = false
 ) {
-
     if (toastTimer) {
-
         clearTimeout(
             toastTimer
         );
-
     }
-
 
     toastMessage.textContent =
         message;
-
 
     toast.classList.toggle(
         "error",
         isError
     );
 
-
     toast.classList.add(
         "visible"
     );
 
-
     toastTimer =
         setTimeout(
             () => {
-
                 toast.classList.remove(
                     "visible"
                 );
-
             },
             3000
         );
-
 }
 
 
@@ -3235,67 +2591,8 @@ function showToast(
 ===================================================== */
 
 function renderEverything() {
-
-    orders =
-        loadOrders();
-
-
     renderStats();
-
     renderOrders();
-
-}
-
-/* =====================================================
-   ABRIR FORMULARIO DESDE OTROS MÓDULOS
-===================================================== */
-
-function openRequestedNewOrder() {
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-
-    const requestedNewOrder =
-        params.get("nuevo") === "1";
-
-
-    if (!requestedNewOrder) {
-
-        return;
-
-    }
-
-
-    /*
-        Abrimos EXACTAMENTE el mismo formulario
-        utilizado por el botón de pedidos.html.
-    */
-
-    openOrderModal();
-
-
-    /*
-        Después de abrirlo quitamos ?nuevo=1.
-
-        Así, si el usuario actualiza la página,
-        el formulario no se vuelve a abrir
-        automáticamente.
-    */
-
-    const cleanURL =
-        window.location.pathname +
-        window.location.hash;
-
-
-    window.history.replaceState(
-        {},
-        document.title,
-        cleanURL
-    );
-
 }
 
 
@@ -3308,394 +2605,188 @@ newOrderButton.addEventListener(
     openOrderModal
 );
 
-
 closeOrderModalButton.addEventListener(
     "click",
     closeOrderModal
 );
-
 
 cancelOrderButton.addEventListener(
     "click",
     closeOrderModal
 );
 
-
 orderForm.addEventListener(
     "submit",
     createOrder
 );
-
 
 addItemButton.addEventListener(
     "click",
     addNewOrderItem
 );
 
-
 orderAdvance.addEventListener(
     "input",
     updateOrderTotals
 );
-
 
 searchInput.addEventListener(
     "input",
     renderOrders
 );
 
-
 sortSelect.addEventListener(
     "change",
     renderOrders
 );
 
-
 filterButtons.forEach(
     button => {
-
         button.addEventListener(
             "click",
             () => {
-
                 activeStatusFilter =
-                    button.dataset.status;
-
+                    button.dataset.status ||
+                    "Todos";
 
                 filterButtons.forEach(
                     item => {
-
                         item.classList.remove(
                             "active"
                         );
-
                     }
                 );
-
 
                 button.classList.add(
                     "active"
                 );
 
-
                 renderOrders();
-
             }
         );
-
     }
 );
-
 
 closeDrawerButton.addEventListener(
     "click",
     closeOrderDetail
 );
 
-
 detailStatus.addEventListener(
     "change",
     () => {
-
         renderProgress(
             detailStatus.value
         );
-
     }
 );
-
 
 saveOrderChangesButton.addEventListener(
     "click",
     saveOrderChanges
 );
 
-
 registerPaymentButton.addEventListener(
     "click",
     registerPayment
 );
 
-
 paymentAmount.addEventListener(
     "keydown",
     event => {
-
         if (
             event.key === "Enter"
         ) {
-
             event.preventDefault();
-
             registerPayment();
-
         }
-
     }
 );
-
 
 deleteOrderButton.addEventListener(
     "click",
     deleteOrder
 );
 
-
 menuButton.addEventListener(
     "click",
     () => {
-
         if (
             sidebar.classList.contains(
                 "open"
             )
         ) {
-
             closeSidebar();
-
         } else {
-
             openSidebar();
-
         }
-
     }
 );
-
 
 overlay.addEventListener(
     "click",
     () => {
-
         if (
             orderModal.classList.contains(
                 "visible"
             )
         ) {
-
             closeOrderModal();
-
             return;
-
         }
-
 
         if (
             orderDrawer.classList.contains(
                 "visible"
             )
         ) {
-
             closeOrderDetail();
-
             return;
-
         }
 
-
         closeSidebar();
-
     }
 );
-
 
 document.addEventListener(
     "keydown",
     event => {
-
         if (
             event.key !== "Escape"
         ) {
             return;
         }
 
-
         if (
             orderModal.classList.contains(
                 "visible"
             )
         ) {
-
             closeOrderModal();
-
             return;
-
         }
-
 
         if (
             orderDrawer.classList.contains(
                 "visible"
             )
         ) {
-
             closeOrderDetail();
-
             return;
-
         }
-
 
         closeSidebar();
-
     }
-);
-
-
-window.addEventListener(
-    "storage",
-    event => {
-
-        if (
-            event.key ===
-                STORAGE_KEY ||
-            event.key ===
-                SETTINGS_STORAGE_KEY
-        ) {
-
-            renderEverything();
-
-        }
-
-    }
-);
-
-
-window.addEventListener(
-    "pageshow",
-    renderEverything
 );
 
 
 /* =====================================================
-   INICIO
+   FIRESTORE EN TIEMPO REAL
 ===================================================== */
-
-async function initialize() {
-
-    setCurrentDate();
-
-    /*
-        Mostramos primero el respaldo local para
-        evitar una pantalla vacía mientras Firebase
-        conecta.
-    */
-
-    renderEverything();
-
-
-    try {
-
-        /*
-            Esperamos al bootstrap de Firestore.
-        */
-
-        if (
-            !window.PisadaBacanaDB
-        ) {
-
-            await new Promise(
-                (resolve, reject) => {
-
-                    const timeout =
-                        setTimeout(
-                            () => {
-
-                                reject(
-                                    new Error(
-                                        "Firebase tardó demasiado en iniciar."
-                                    )
-                                );
-
-                            },
-                            10000
-                        );
-
-
-                    window.addEventListener(
-                        "pisadabacana:firestore-ready",
-                        () => {
-
-                            clearTimeout(
-                                timeout
-                            );
-
-                            resolve();
-
-                        },
-                        {
-                            once: true
-                        }
-                    );
-
-
-                    window.addEventListener(
-                        "pisadabacana:firestore-error",
-                        event => {
-
-                            clearTimeout(
-                                timeout
-                            );
-
-                            reject(
-                                event.detail
-                                    ?.error ||
-                                new Error(
-                                    "Error de Firebase."
-                                )
-                            );
-
-                        },
-                        {
-                            once: true
-                        }
-                    );
-
-                }
-            );
-
-        }
-
-
-        orders =
-            await getDatabase()
-                .getOrders();
-
-
-        renderEverything();
-
-
-        openRequestedNewOrder();
-
-    } catch (error) {
-
-        console.error(
-            "Pedidos funcionará temporalmente con respaldo local:",
-            error
-        );
-
-
-        showToast(
-            "No se pudo sincronizar con Firebase.",
-            true
-        );
-
-
-        /*
-            Aunque Firebase falle, mantenemos
-            disponible la interfaz.
-        */
-
-        openRequestedNewOrder();
-
-    }
-
-}
 
 window.addEventListener(
     "pisadabacana:orders-updated",
     event => {
-
         if (
             !Array.isArray(
                 event.detail?.orders
@@ -3704,27 +2795,88 @@ window.addEventListener(
             return;
         }
 
-
         orders =
             event.detail.orders;
 
-
         renderEverything();
-
 
         if (
             selectedOrderId &&
             getSelectedOrder()
         ) {
-
             openOrderDetail(
                 selectedOrderId
             );
-
         }
-
     }
 );
 
-initialize();
 
+window.addEventListener(
+    "pisadabacana:settings-updated",
+    event => {
+        appSettings =
+            event.detail?.settings ||
+            null;
+
+        if (
+            newOrderItems.length &&
+            orderModal.classList.contains(
+                "visible"
+            )
+        ) {
+            /*
+                Conservamos la selección actual.
+                Sólo redibujamos las opciones/precios.
+            */
+            renderNewOrderItems();
+        }
+    }
+);
+
+
+/* =====================================================
+   INICIO
+===================================================== */
+
+async function initialize() {
+    setCurrentDate();
+    renderEverything();
+
+    try {
+        await waitForFirestore();
+
+        const database =
+            getDatabase();
+
+        [
+            orders,
+            appSettings
+        ] =
+            await Promise.all([
+                database.getOrders(),
+                database.getSettings()
+            ]);
+
+        renderEverything();
+
+        /*
+            Se ejecuta DESPUÉS de cargar settings.
+        */
+        openRequestedNewOrder();
+
+    } catch (error) {
+        console.error(
+            "No se pudo iniciar Pedidos con Firestore:",
+            error
+        );
+
+        showToast(
+            "No se pudo conectar con Firebase.",
+            true
+        );
+    }
+}
+
+
+initialize();

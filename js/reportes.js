@@ -1,5 +1,16 @@
 "use strict";
 
+function getDatabase() {
+
+    if (!window.PisadaBacanaDB) {
+        throw new Error(
+            "Firebase todavía no está listo."
+        );
+    }
+
+    return window.PisadaBacanaDB;
+}
+
 /* =====================================================
    CONFIGURACIÓN
 ===================================================== */
@@ -15,7 +26,7 @@ const ORDER_STATUSES = [
     "Entregado"
 ];
 
-let orders = loadOrders();
+let orders = [];
 let filteredOrders = [];
 
 
@@ -150,40 +161,7 @@ const tableEmpty =
     document.getElementById("tableEmpty");
 
 
-/* =====================================================
-   STORAGE
-===================================================== */
 
-function loadOrders() {
-
-    try {
-
-        const stored =
-            localStorage.getItem(STORAGE_KEY);
-
-        if (!stored) {
-            return [];
-        }
-
-        const parsed =
-            JSON.parse(stored);
-
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
-
-    } catch (error) {
-
-        console.error(
-            "Error cargando pedidos:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
 
 
 /* =====================================================
@@ -244,48 +222,74 @@ function getOrderDate(order) {
 }
 
 
-function getOrderBalance(order) {
+function getOrderTotal(order) {
 
     if (
-        order.balance !== undefined &&
-        order.balance !== null &&
-        order.balance !== ""
+        Number.isFinite(
+            Number(order.price)
+        )
     ) {
-
-        const balance =
-            Number(order.balance);
-
-        if (
-            Number.isFinite(balance)
-        ) {
-
-            return Math.max(
-                balance,
-                0
-            );
-
-        }
-
+        return Math.max(
+            Number(order.price),
+            0
+        );
     }
 
+    if (Array.isArray(order.items)) {
 
-    return Math.max(
-        Number(order.price || 0) -
-        Number(order.advance || 0),
-        0
-    );
+        return order.items.reduce(
+            (total, item) =>
+                total +
+                Math.max(
+                    Number(item.price || 0),
+                    0
+                ),
+            0
+        );
+    }
 
+    return 0;
 }
 
 
 function getOrderCollected(order) {
 
+    if (Array.isArray(order.payments)) {
+
+        return order.payments.reduce(
+            (total, payment) =>
+                total +
+                Math.max(
+                    Number(payment.amount || 0),
+                    0
+                ),
+            0
+        );
+    }
+
+    /*
+        Compatibilidad defensiva con pedidos
+        históricos todavía no normalizados.
+    */
+
     return Math.max(
-        Number(order.price || 0) -
-        getOrderBalance(order),
+        Number(
+            order.paid ??
+            order.advance ??
+            0
+        ),
         0
     );
+}
 
+
+function getOrderBalance(order) {
+
+    return Math.max(
+        getOrderTotal(order) -
+        getOrderCollected(order),
+        0
+    );
 }
 
 
@@ -466,10 +470,9 @@ function renderStats() {
         filteredOrders.reduce(
             (total, order) =>
                 total +
-                Number(order.price || 0),
+                getOrderTotal(order),
             0
         );
-
 
     const collected =
         filteredOrders.reduce(
@@ -479,7 +482,6 @@ function renderStats() {
             0
         );
 
-
     const pending =
         filteredOrders.reduce(
             (total, order) =>
@@ -488,13 +490,11 @@ function renderStats() {
             0
         );
 
-
     const pendingCount =
         filteredOrders.filter(
             order =>
                 getOrderBalance(order) > 0
         ).length;
-
 
     const delivered =
         filteredOrders.filter(
@@ -503,22 +503,17 @@ function renderStats() {
                 "entregado"
         ).length;
 
-
     totalSales.textContent =
         formatMoney(sales);
-
 
     totalCollected.textContent =
         formatMoney(collected);
 
-
     totalPending.textContent =
         formatMoney(pending);
 
-
     totalOrders.textContent =
         filteredOrders.length;
-
 
     salesDescription.textContent =
         `${filteredOrders.length} ${
@@ -527,13 +522,11 @@ function renderStats() {
                 : "pedidos"
         } en el periodo`;
 
-
     collectionPercentage.textContent =
         `${percentage(
             collected,
             sales
         )}% cobrado`;
-
 
     pendingDescription.textContent =
         `${pendingCount} ${
@@ -542,14 +535,11 @@ function renderStats() {
                 : "pedidos pendientes"
         }`;
 
-
     deliveredDescription.textContent =
         `${delivered} entregados`;
 
-
     chartTotal.textContent =
         formatMoney(sales);
-
 }
 
 
@@ -1929,13 +1919,8 @@ document
 
 function renderEverything() {
 
-    orders =
-        loadOrders();
-
-
     filteredOrders =
         getOrdersByPeriod();
-
 
     navOrderCount.textContent =
         orders.filter(
@@ -1944,7 +1929,6 @@ function renderEverything() {
                     order.status
                 ) !== "entregado"
         ).length;
-
 
     renderStats();
 
@@ -1961,9 +1945,7 @@ function renderEverything() {
     renderSummary();
 
     renderOrdersTable();
-
 }
-
 
 /* =====================================================
    EVENTOS
@@ -2029,25 +2011,25 @@ document.addEventListener(
 );
 
 
+/* =====================================================
+   SINCRONIZACIÓN FIRESTORE
+===================================================== */
+
 window.addEventListener(
-    "storage",
+    "pisadabacana:orders-updated",
     event => {
 
-        if (
-            event.key === STORAGE_KEY
-        ) {
+        const firestoreOrders =
+            event.detail?.orders;
 
-            renderEverything();
-
+        if (!Array.isArray(firestoreOrders)) {
+            return;
         }
 
+        orders = firestoreOrders;
+
+        renderEverything();
     }
-);
-
-
-window.addEventListener(
-    "pageshow",
-    renderEverything
 );
 
 
@@ -2055,12 +2037,77 @@ window.addEventListener(
    INICIO
 ===================================================== */
 
-function initialize() {
+async function initialize() {
 
     setCurrentDate();
 
     renderEverything();
 
+    try {
+
+        if (!window.PisadaBacanaDB) {
+
+            await new Promise(
+                (resolve, reject) => {
+
+                    const timeout =
+                        setTimeout(
+                            () => {
+                                reject(
+                                    new Error(
+                                        "Firebase tardó demasiado en iniciar."
+                                    )
+                                );
+                            },
+                            10000
+                        );
+
+                    window.addEventListener(
+                        "pisadabacana:firestore-ready",
+                        () => {
+
+                            clearTimeout(timeout);
+                            resolve();
+                        },
+                        {
+                            once: true
+                        }
+                    );
+
+                    window.addEventListener(
+                        "pisadabacana:firestore-error",
+                        event => {
+
+                            clearTimeout(timeout);
+
+                            reject(
+                                event.detail?.error ||
+                                new Error(
+                                    "No se pudo iniciar Firebase."
+                                )
+                            );
+                        },
+                        {
+                            once: true
+                        }
+                    );
+                }
+            );
+        }
+
+        orders =
+            await getDatabase()
+                .getOrders();
+
+        renderEverything();
+
+    } catch (error) {
+
+        console.error(
+            "Error cargando Reportes desde Firestore:",
+            error
+        );
+    }
 }
 
 

@@ -27,15 +27,34 @@ import {
    CONFIGURACIÓN
 ===================================================== */
 
-const ORDERS_COLLECTION = "orders";
-const SETTINGS_COLLECTION = "settings";
-const SYSTEM_COLLECTION = "system";
+const ORDERS_COLLECTION =
+    "orders";
 
-const BUSINESS_SETTINGS_ID = "business";
-const COUNTER_ID = "orderCounter";
+const SETTINGS_COLLECTION =
+    "settings";
 
-const LOCAL_ORDERS_KEY = "pisadaBacanaOrders";
-const LOCAL_SETTINGS_KEY = "pisadaBacanaSettings";
+const SYSTEM_COLLECTION =
+    "system";
+
+const BUSINESS_SETTINGS_ID =
+    "business";
+
+const COUNTER_ID =
+    "orderCounter";
+
+
+/*
+    Estas claves existen ÚNICAMENTE para importar
+    datos históricos.
+
+    No son utilizadas como base activa.
+*/
+
+const LOCAL_ORDERS_KEY =
+    "pisadaBacanaOrders";
+
+const LOCAL_SETTINGS_KEY =
+    "pisadaBacanaSettings";
 
 const MIGRATION_KEY =
     "pisadaBacanaFirestoreMigrationV1";
@@ -45,15 +64,6 @@ const MIGRATION_KEY =
    UTILIDADES
 ===================================================== */
 
-function clone(value) {
-
-    return JSON.parse(
-        JSON.stringify(value)
-    );
-
-}
-
-
 function createId(prefix = "id") {
 
     if (
@@ -62,8 +72,10 @@ function createId(prefix = "id") {
             "function"
     ) {
 
-        return `${prefix}-${window.crypto.randomUUID()}`;
-
+        return (
+            `${prefix}-` +
+            window.crypto.randomUUID()
+        );
     }
 
     return (
@@ -72,59 +84,14 @@ function createId(prefix = "id") {
             .toString(36)
             .slice(2, 10)
     );
-
 }
 
 
-function toISO(value) {
+function clone(value) {
 
-    if (!value) {
-        return null;
-    }
-
-    /*
-        Firestore Timestamp.
-    */
-
-    if (
-        value &&
-        typeof value.toDate === "function"
-    ) {
-
-        return value
-            .toDate()
-            .toISOString();
-
-    }
-
-    /*
-        Firebase Timestamp serializado.
-    */
-
-    if (
-        typeof value === "object" &&
-        typeof value.seconds === "number"
-    ) {
-
-        return new Date(
-            value.seconds * 1000
-        ).toISOString();
-
-    }
-
-    const date =
-        new Date(value);
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-        return null;
-    }
-
-    return date.toISOString();
-
+    return JSON.parse(
+        JSON.stringify(value)
+    );
 }
 
 
@@ -132,9 +99,9 @@ function sanitizeForFirestore(value) {
 
     if (Array.isArray(value)) {
 
-        return value
-            .map(sanitizeForFirestore);
-
+        return value.map(
+            sanitizeForFirestore
+        );
     }
 
     if (
@@ -158,21 +125,72 @@ function sanitizeForFirestore(value) {
                         sanitizeForFirestore(
                             child
                         );
-
                 }
             );
 
         return result;
-
     }
 
     return value;
+}
 
+
+function toISO(value) {
+
+    if (!value) {
+        return null;
+    }
+
+    if (
+        typeof value.toDate ===
+        "function"
+    ) {
+
+        return value
+            .toDate()
+            .toISOString();
+    }
+
+    if (
+        typeof value === "object" &&
+        typeof value.seconds ===
+            "number"
+    ) {
+
+        return new Date(
+            value.seconds * 1000
+        ).toISOString();
+    }
+
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return null;
+    }
+
+    return date.toISOString();
+}
+
+
+function getCodeNumber(code) {
+
+    const match =
+        String(code || "")
+            .match(/(\d+)$/);
+
+    return match
+        ? Number(match[1])
+        : 0;
 }
 
 
 /* =====================================================
-   NORMALIZAR PAGOS
+   PAGOS
 ===================================================== */
 
 function normalizePayments(order) {
@@ -180,96 +198,140 @@ function normalizePayments(order) {
     const payments =
         Array.isArray(order.payments)
             ? clone(order.payments)
+                .map(
+                    payment => ({
+                        id:
+                            payment.id ||
+                            createId(
+                                "payment"
+                            ),
+
+                        amount:
+                            Math.max(
+                                Number(
+                                    payment.amount ||
+                                    0
+                                ),
+                                0
+                            ),
+
+                        method:
+                            String(
+                                payment.method ||
+                                order.paymentMethod ||
+                                "Efectivo"
+                            ),
+
+                        type:
+                            String(
+                                payment.type ||
+                                "Pago"
+                            ),
+
+                        date:
+                            toISO(
+                                payment.date
+                            ) ||
+                            toISO(
+                                order.createdAt
+                            ) ||
+                            new Date()
+                                .toISOString()
+                    })
+                )
+                .filter(
+                    payment =>
+                        payment.amount > 0
+                )
             : [];
 
-    const advance =
+
+    const legacyPaid =
         Math.max(
             Number(
-                order.advance || 0
+                order.paid ??
+                order.advance ??
+                0
             ),
             0
         );
 
-    /*
-        Hay dos formatos históricos:
 
-        A)
-        advance contiene TODO lo pagado y
-        payments contiene solamente pagos posteriores.
-
-        B)
-        advance contiene TODO lo pagado y
-        payments ya contiene también el anticipo.
-
-        No debemos sumar advance + payments.
-    */
-
-    let paymentTotal =
+    let paymentsTotal =
         payments.reduce(
-            (sum, payment) =>
-                sum +
-                Math.max(
-                    Number(
-                        payment.amount || 0
-                    ),
-                    0
-                ),
+            (total, payment) =>
+                total +
+                payment.amount,
             0
         );
 
-    if (
-        advance > 0 &&
-        paymentTotal < advance
-    ) {
 
-        const missing =
-            advance - paymentTotal;
+    /*
+        Si advance/paid contiene más dinero
+        que payments[], añadimos solamente
+        la diferencia.
+
+        Esto evita duplicar anticipos.
+    */
+
+    if (
+        legacyPaid >
+        paymentsTotal + 0.005
+    ) {
 
         payments.unshift({
             id:
-                createId("payment"),
+                createId(
+                    "payment"
+                ),
 
             amount:
-                missing,
+                legacyPaid -
+                paymentsTotal,
 
             method:
-                order.paymentMethod ||
-                "Efectivo",
+                String(
+                    order.paymentMethod ||
+                    "Efectivo"
+                ),
 
             type:
-                "Anticipo",
+                payments.length
+                    ? "Ajuste de migración"
+                    : "Anticipo",
 
             date:
-                order.createdAt ||
+                toISO(
+                    order.createdAt
+                ) ||
                 new Date()
                     .toISOString()
         });
 
-        paymentTotal += missing;
 
+        paymentsTotal =
+            payments.reduce(
+                (total, payment) =>
+                    total +
+                    payment.amount,
+                0
+            );
     }
 
-    /*
-        Si un formato antiguo produce payments > advance,
-        payments es la fuente más detallada.
-    */
-
-    const paid =
-        Math.max(
-            advance,
-            paymentTotal
-        );
 
     return {
         payments,
-        paid
+        paid:
+            Math.max(
+                paymentsTotal,
+                legacyPaid
+            )
     };
-
 }
 
 
 /* =====================================================
-   NORMALIZAR PEDIDO
+   NORMALIZACIÓN DE PEDIDOS
 ===================================================== */
 
 function normalizeOrder(
@@ -280,6 +342,7 @@ function normalizeOrder(
     const order =
         clone(source || {});
 
+
     const id =
         String(
             order.id ||
@@ -287,14 +350,17 @@ function normalizeOrder(
             createId("order")
         );
 
+
     const items =
         Array.isArray(order.items) &&
-        order.items.length > 0
+        order.items.length
             ? order.items.map(
                 item => ({
                     id:
                         item.id ||
-                        createId("item"),
+                        createId(
+                            "item"
+                        ),
 
                     itemType:
                         item.itemType ===
@@ -333,7 +399,9 @@ function normalizeOrder(
             )
             : [{
                 id:
-                    createId("item"),
+                    createId(
+                        "item"
+                    ),
 
                 itemType:
                     order.itemType ===
@@ -370,37 +438,54 @@ function normalizeOrder(
                     )
             }];
 
+
     const itemTotal =
         items.reduce(
-            (sum, item) =>
-                sum +
-                Number(
-                    item.price || 0
-                ),
+            (total, item) =>
+                total +
+                item.price,
             0
         );
 
-    const price =
+
+    const total =
         itemTotal > 0
             ? itemTotal
             : Math.max(
                 Number(
-                    order.price || 0
+                    order.total ??
+                    order.price ??
+                    0
                 ),
                 0
             );
 
+
     const {
         payments,
-        paid
+        paid: rawPaid
     } =
         normalizePayments(order);
 
+
+    /*
+        Nunca permitimos contablemente
+        cobrar más que el total.
+    */
+
+    const paid =
+        Math.min(
+            rawPaid,
+            total
+        );
+
+
     const balance =
         Math.max(
-            price - paid,
+            total - paid,
             0
         );
+
 
     const createdAt =
         toISO(
@@ -409,16 +494,17 @@ function normalizeOrder(
         new Date()
             .toISOString();
 
+
     const updatedAt =
         toISO(
             order.updatedAt
         ) ||
         createdAt;
 
-    const deliveredAt =
-        toISO(
-            order.deliveredAt
-        );
+
+    const firstItem =
+        items[0];
+
 
     const normalized = {
 
@@ -443,22 +529,28 @@ function normalizeOrder(
 
         items,
 
-        price,
+        /*
+            total es canónico.
+            price se mantiene por compatibilidad.
+        */
+
+        total,
+        price:
+            total,
+
+        payments,
 
         paid,
 
         /*
-            Compatibilidad temporal con los módulos
-            existentes.
-
-            advance representa "total pagado".
+            advance se conserva para compatibilidad
+            con respaldos antiguos.
         */
+
         advance:
             paid,
 
         balance,
-
-        payments,
 
         paymentMethod:
             String(
@@ -483,102 +575,54 @@ function normalizeOrder(
                 order.notes || ""
             ),
 
+        itemType:
+            firstItem?.itemType ||
+            "Tenis",
+
+        brand:
+            firstItem?.brand ||
+            "",
+
+        model:
+            firstItem?.model ||
+            "",
+
+        color:
+            firstItem?.color ||
+            "",
+
+        service:
+            items.length === 1
+                ? (
+                    firstItem?.service ||
+                    ""
+                )
+                : `${items.length} artículos`,
+
         createdAt,
-
         updatedAt
-
     };
 
+
+    const deliveredAt =
+        toISO(
+            order.deliveredAt
+        );
+
+
     if (deliveredAt) {
+
         normalized.deliveredAt =
             deliveredAt;
+
     } else {
-        delete normalized.deliveredAt;
+
+        delete normalized
+            .deliveredAt;
     }
 
-    /*
-        Compatibilidad con las pantallas antiguas.
-    */
-
-    const firstItem =
-        items[0];
-
-    normalized.itemType =
-        firstItem?.itemType || "Tenis";
-
-    normalized.brand =
-        firstItem?.brand || "";
-
-    normalized.model =
-        firstItem?.model || "";
-
-    normalized.color =
-        firstItem?.color || "";
-
-    normalized.service =
-        items.length === 1
-            ? (
-                firstItem?.service ||
-                ""
-            )
-            : `${items.length} artículos`;
 
     return normalized;
-
-}
-
-
-/* =====================================================
-   CACHE LOCAL TEMPORAL
-===================================================== */
-
-function cacheOrders(orders) {
-
-    localStorage.setItem(
-        LOCAL_ORDERS_KEY,
-        JSON.stringify(
-            orders
-        )
-    );
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "pisadabacana:orders-updated",
-            {
-                detail: {
-                    orders
-                }
-            }
-        )
-    );
-
-}
-
-
-function cacheSettings(settings) {
-
-    if (!settings) {
-        return;
-    }
-
-    localStorage.setItem(
-        LOCAL_SETTINGS_KEY,
-        JSON.stringify(
-            settings
-        )
-    );
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "pisadabacana:settings-updated",
-            {
-                detail: {
-                    settings
-                }
-            }
-        )
-    );
-
 }
 
 
@@ -589,6 +633,7 @@ function cacheSettings(settings) {
 async function getOrders() {
 
     await ensureAnonymousSession();
+
 
     const ordersQuery =
         query(
@@ -602,24 +647,20 @@ async function getOrders() {
             )
         );
 
+
     const snapshot =
         await getDocs(
             ordersQuery
         );
 
-    const orders =
-        snapshot.docs.map(
-            snapshotDocument =>
-                normalizeOrder(
-                    snapshotDocument.data(),
-                    snapshotDocument.id
-                )
-        );
 
-    cacheOrders(orders);
-
-    return orders;
-
+    return snapshot.docs.map(
+        snapshotDocument =>
+            normalizeOrder(
+                snapshotDocument.data(),
+                snapshotDocument.id
+            )
+    );
 }
 
 
@@ -627,27 +668,30 @@ async function getOrder(orderId) {
 
     await ensureAnonymousSession();
 
+
     const reference =
         doc(
             db,
             ORDERS_COLLECTION,
-            orderId
+            String(orderId)
         );
+
 
     const snapshot =
         await getDoc(
             reference
         );
 
+
     if (!snapshot.exists()) {
         return null;
     }
+
 
     return normalizeOrder(
         snapshot.data(),
         snapshot.id
     );
-
 }
 
 
@@ -655,12 +699,15 @@ async function saveOrder(order) {
 
     await ensureAnonymousSession();
 
+
     const normalized =
         normalizeOrder(order);
+
 
     normalized.updatedAt =
         new Date()
             .toISOString();
+
 
     await setDoc(
         doc(
@@ -676,44 +723,29 @@ async function saveOrder(order) {
         }
     );
 
-    return normalized;
 
+    return normalized;
 }
 
 
-async function deleteOrder(orderId) {
+async function removeOrder(orderId) {
 
     await ensureAnonymousSession();
+
 
     await deleteDoc(
         doc(
             db,
             ORDERS_COLLECTION,
-            orderId
+            String(orderId)
         )
     );
-
 }
 
 
 /* =====================================================
-   FOLIO ATÓMICO
+   FOLIOS
 ===================================================== */
-
-function getCodeNumber(code) {
-
-    const match =
-        String(code || "")
-            .match(
-                /(\d+)$/
-            );
-
-    return match
-        ? Number(match[1])
-        : 0;
-
-}
-
 
 async function getHighestExistingFolio() {
 
@@ -725,20 +757,17 @@ async function getHighestExistingFolio() {
             )
         );
 
-    return snapshot.docs.reduce(
-        (highest, item) => {
 
-            return Math.max(
+    return snapshot.docs.reduce(
+        (highest, item) =>
+            Math.max(
                 highest,
                 getCodeNumber(
                     item.data()?.code
                 )
-            );
-
-        },
+            ),
         0
     );
-
 }
 
 
@@ -748,15 +777,19 @@ async function getNextOrderCode(
 
     await ensureAnonymousSession();
 
+
     const normalizedPrefix =
         String(
             prefix || "PB"
         )
+            .trim()
             .toUpperCase()
             .replace(
                 /[^A-Z0-9]/g,
                 ""
-            ) || "PB";
+            ) ||
+        "PB";
+
 
     const counterReference =
         doc(
@@ -765,8 +798,10 @@ async function getNextOrderCode(
             COUNTER_ID
         );
 
+
     const highestExisting =
         await getHighestExistingFolio();
+
 
     const nextNumber =
         await runTransaction(
@@ -778,19 +813,26 @@ async function getNextOrderCode(
                         counterReference
                     );
 
-                const current =
+
+                const storedValue =
                     snapshot.exists()
-                        ? Math.max(
-                            Number(
-                                snapshot.data()
-                                    .value || 0
-                            ),
-                            highestExisting
+                        ? Number(
+                            snapshot.data()
+                                .value || 0
                         )
-                        : highestExisting;
+                        : 0;
+
+
+                const current =
+                    Math.max(
+                        storedValue,
+                        highestExisting
+                    );
+
 
                 const next =
                     current + 1;
+
 
                 transaction.set(
                     counterReference,
@@ -810,10 +852,11 @@ async function getNextOrderCode(
                     }
                 );
 
-                return next;
 
+                return next;
             }
         );
+
 
     return (
         `${normalizedPrefix}-` +
@@ -823,17 +866,17 @@ async function getNextOrderCode(
                 "0"
             )
     );
-
 }
 
 
 /* =====================================================
-   CONFIGURACIÓN
+   SETTINGS
 ===================================================== */
 
 async function getSettings() {
 
     await ensureAnonymousSession();
+
 
     const reference =
         doc(
@@ -842,37 +885,24 @@ async function getSettings() {
             BUSINESS_SETTINGS_ID
         );
 
+
     const snapshot =
         await getDoc(
             reference
         );
 
+
     if (!snapshot.exists()) {
-
-        const local =
-            localStorage.getItem(
-                LOCAL_SETTINGS_KEY
-            );
-
-        if (!local) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(local);
-        } catch {
-            return null;
-        }
-
+        return null;
     }
 
-    const settings =
-        snapshot.data();
 
-    cacheSettings(settings);
+    return {
+        id:
+            snapshot.id,
 
-    return settings;
-
+        ...snapshot.data()
+    };
 }
 
 
@@ -880,10 +910,12 @@ async function saveSettings(settings) {
 
     await ensureAnonymousSession();
 
+
     const clean =
         sanitizeForFirestore(
-            settings
+            settings || {}
         );
+
 
     await setDoc(
         doc(
@@ -903,18 +935,392 @@ async function saveSettings(settings) {
         }
     );
 
-    cacheSettings(clean);
 
     return clean;
-
 }
 
 
 /* =====================================================
-   MIGRACIÓN LOCAL → FIRESTORE
+   TIEMPO REAL - PEDIDOS
 ===================================================== */
 
-function readLocalOrders() {
+function subscribeOrders(callback) {
+
+    let unsubscribe =
+        () => {};
+
+    let cancelled =
+        false;
+
+
+    ensureAnonymousSession()
+        .then(() => {
+
+            if (cancelled) {
+                return;
+            }
+
+
+            const ordersQuery =
+                query(
+                    collection(
+                        db,
+                        ORDERS_COLLECTION
+                    ),
+                    orderBy(
+                        "createdAt",
+                        "desc"
+                    )
+                );
+
+
+            unsubscribe =
+                onSnapshot(
+                    ordersQuery,
+                    snapshot => {
+
+                        const orders =
+                            snapshot.docs.map(
+                                item =>
+                                    normalizeOrder(
+                                        item.data(),
+                                        item.id
+                                    )
+                            );
+
+
+                        callback(
+                            orders
+                        );
+                    },
+                    error => {
+
+                        console.error(
+                            "Error sincronizando pedidos:",
+                            error
+                        );
+                    }
+                );
+        })
+        .catch(error => {
+
+            console.error(
+                "No se pudo iniciar la sincronización de pedidos:",
+                error
+            );
+        });
+
+
+    return () => {
+
+        cancelled = true;
+        unsubscribe();
+    };
+}
+
+
+/* =====================================================
+   TIEMPO REAL - SETTINGS
+===================================================== */
+
+function subscribeSettings(callback) {
+
+    let unsubscribe =
+        () => {};
+
+    let cancelled =
+        false;
+
+
+    ensureAnonymousSession()
+        .then(() => {
+
+            if (cancelled) {
+                return;
+            }
+
+
+            const reference =
+                doc(
+                    db,
+                    SETTINGS_COLLECTION,
+                    BUSINESS_SETTINGS_ID
+                );
+
+
+            unsubscribe =
+                onSnapshot(
+                    reference,
+                    snapshot => {
+
+                        callback(
+                            snapshot.exists()
+                                ? {
+                                    id:
+                                        snapshot.id,
+
+                                    ...snapshot.data()
+                                }
+                                : null
+                        );
+                    },
+                    error => {
+
+                        console.error(
+                            "Error sincronizando ajustes:",
+                            error
+                        );
+                    }
+                );
+        })
+        .catch(error => {
+
+            console.error(
+                "No se pudo iniciar la sincronización de ajustes:",
+                error
+            );
+        });
+
+
+    return () => {
+
+        cancelled = true;
+        unsubscribe();
+    };
+}
+
+
+/* =====================================================
+   RESTAURACIÓN
+===================================================== */
+
+async function replaceOrders(
+    newOrders
+) {
+
+    await ensureAnonymousSession();
+
+
+    const incoming =
+        Array.isArray(newOrders)
+            ? newOrders
+            : [];
+
+
+    const existingSnapshot =
+        await getDocs(
+            collection(
+                db,
+                ORDERS_COLLECTION
+            )
+        );
+
+
+    const operations = [];
+
+
+    existingSnapshot.docs.forEach(
+        snapshotDocument => {
+
+            operations.push({
+                type:
+                    "delete",
+
+                reference:
+                    snapshotDocument.ref
+            });
+        }
+    );
+
+
+    incoming.forEach(
+        sourceOrder => {
+
+            const normalized =
+                normalizeOrder(
+                    sourceOrder
+                );
+
+
+            operations.push({
+                type:
+                    "set",
+
+                reference:
+                    doc(
+                        db,
+                        ORDERS_COLLECTION,
+                        normalized.id
+                    ),
+
+                data:
+                    sanitizeForFirestore(
+                        normalized
+                    )
+            });
+        }
+    );
+
+
+    for (
+        let index = 0;
+        index < operations.length;
+        index += 400
+    ) {
+
+        const batch =
+            writeBatch(db);
+
+
+        operations
+            .slice(
+                index,
+                index + 400
+            )
+            .forEach(
+                operation => {
+
+                    if (
+                        operation.type ===
+                        "delete"
+                    ) {
+
+                        batch.delete(
+                            operation.reference
+                        );
+
+                    } else {
+
+                        batch.set(
+                            operation.reference,
+                            operation.data
+                        );
+                    }
+                }
+            );
+
+
+        await batch.commit();
+    }
+
+
+    const highest =
+        incoming.reduce(
+            (maximum, order) =>
+                Math.max(
+                    maximum,
+                    getCodeNumber(
+                        order.code
+                    )
+                ),
+            0
+        );
+
+
+    await setDoc(
+        doc(
+            db,
+            SYSTEM_COLLECTION,
+            COUNTER_ID
+        ),
+        {
+            value:
+                highest,
+
+            updatedAt:
+                new Date()
+                    .toISOString()
+        },
+        {
+            merge: true
+        }
+    );
+
+
+    return getOrders();
+}
+
+
+/* =====================================================
+   ELIMINAR TODOS
+===================================================== */
+
+async function deleteAllOrders() {
+
+    await ensureAnonymousSession();
+
+
+    const snapshot =
+        await getDocs(
+            collection(
+                db,
+                ORDERS_COLLECTION
+            )
+        );
+
+
+    const references =
+        snapshot.docs.map(
+            item =>
+                item.ref
+        );
+
+
+    for (
+        let index = 0;
+        index < references.length;
+        index += 400
+    ) {
+
+        const batch =
+            writeBatch(db);
+
+
+        references
+            .slice(
+                index,
+                index + 400
+            )
+            .forEach(
+                reference => {
+
+                    batch.delete(
+                        reference
+                    );
+                }
+            );
+
+
+        await batch.commit();
+    }
+
+
+    await setDoc(
+        doc(
+            db,
+            SYSTEM_COLLECTION,
+            COUNTER_ID
+        ),
+        {
+            value:
+                0,
+
+            updatedAt:
+                new Date()
+                    .toISOString()
+        },
+        {
+            merge: true
+        }
+    );
+}
+
+
+/* =====================================================
+   MIGRACIÓN HISTÓRICA
+===================================================== */
+
+function readLegacyOrders() {
 
     try {
 
@@ -923,12 +1329,15 @@ function readLocalOrders() {
                 LOCAL_ORDERS_KEY
             );
 
+
         if (!stored) {
             return [];
         }
 
+
         const parsed =
             JSON.parse(stored);
+
 
         return Array.isArray(parsed)
             ? parsed
@@ -937,18 +1346,17 @@ function readLocalOrders() {
     } catch (error) {
 
         console.error(
-            "No se pudo leer el respaldo local:",
+            "No se pudieron leer los pedidos históricos:",
             error
         );
 
+
         return [];
-
     }
-
 }
 
 
-function readLocalSettings() {
+function readLegacySettings() {
 
     try {
 
@@ -957,27 +1365,33 @@ function readLocalSettings() {
                 LOCAL_SETTINGS_KEY
             );
 
-        return stored
-            ? JSON.parse(stored)
-            : null;
+
+        if (!stored) {
+            return null;
+        }
+
+
+        return JSON.parse(
+            stored
+        );
 
     } catch (error) {
 
         console.error(
-            "No se pudo leer la configuración local:",
+            "No se pudieron leer los ajustes históricos:",
             error
         );
 
+
         return null;
-
     }
-
 }
 
 
 async function migrateLocalDataOnce() {
 
     await ensureAnonymousSession();
+
 
     if (
         localStorage.getItem(
@@ -986,42 +1400,57 @@ async function migrateLocalDataOnce() {
     ) {
 
         return {
-            migrated: false,
-            reason: "already-migrated"
-        };
+            migrated:
+                false,
 
+            reason:
+                "already-migrated"
+        };
     }
 
+
     const localOrders =
-        readLocalOrders();
+        readLegacyOrders();
 
     const localSettings =
-        readLocalSettings();
+        readLegacySettings();
+
 
     /*
-        Solo importamos pedidos locales cuando
-        todavía no existe ese ID en Firestore.
+        Migramos pedidos uno por uno de manera
+        idempotente.
 
-        Así una segunda computadora no sobreescribe
-        pedidos existentes.
+        Si el ID ya existe en Firestore,
+        no lo sobreescribimos.
     */
 
-    if (
-        localOrders.length > 0
+    for (
+        let index = 0;
+        index < localOrders.length;
+        index += 400
     ) {
 
         const batch =
             writeBatch(db);
 
+
+        const group =
+            localOrders.slice(
+                index,
+                index + 400
+            );
+
+
         for (
-            const localOrder
-            of localOrders
+            const sourceOrder
+            of group
         ) {
 
             const normalized =
                 normalizeOrder(
-                    localOrder
+                    sourceOrder
                 );
+
 
             const reference =
                 doc(
@@ -1030,10 +1459,12 @@ async function migrateLocalDataOnce() {
                     normalized.id
                 );
 
+
             const existing =
                 await getDoc(
                     reference
                 );
+
 
             if (!existing.exists()) {
 
@@ -1043,14 +1474,18 @@ async function migrateLocalDataOnce() {
                         normalized
                     )
                 );
-
             }
-
         }
 
-        await batch.commit();
 
+        await batch.commit();
     }
+
+
+    /*
+        Settings históricos solamente se importan
+        si Firestore todavía no tiene configuración.
+    */
 
     if (localSettings) {
 
@@ -1061,12 +1496,14 @@ async function migrateLocalDataOnce() {
                 BUSINESS_SETTINGS_ID
             );
 
-        const existingSettings =
+
+        const existing =
             await getDoc(
                 settingsReference
             );
 
-        if (!existingSettings.exists()) {
+
+        if (!existing.exists()) {
 
             await setDoc(
                 settingsReference,
@@ -1074,18 +1511,17 @@ async function migrateLocalDataOnce() {
                     localSettings
                 )
             );
-
         }
-
     }
 
+
     /*
-        Inicializamos el contador con el folio
-        mayor que exista después de migrar.
+        Sincronizamos contador.
     */
 
     const highest =
         await getHighestExistingFolio();
+
 
     const counterReference =
         doc(
@@ -1093,6 +1529,7 @@ async function migrateLocalDataOnce() {
             SYSTEM_COLLECTION,
             COUNTER_ID
         );
+
 
     await runTransaction(
         db,
@@ -1103,6 +1540,7 @@ async function migrateLocalDataOnce() {
                     counterReference
                 );
 
+
             const current =
                 snapshot.exists()
                     ? Number(
@@ -1110,6 +1548,7 @@ async function migrateLocalDataOnce() {
                             .value || 0
                     )
                     : 0;
+
 
             if (highest > current) {
 
@@ -1127,114 +1566,29 @@ async function migrateLocalDataOnce() {
                         merge: true
                     }
                 );
-
             }
-
         }
     );
+
 
     localStorage.setItem(
         MIGRATION_KEY,
         "complete"
     );
 
+
     return {
-        migrated: true,
+        migrated:
+            true,
+
         orders:
             localOrders.length,
+
         settings:
-            Boolean(localSettings)
+            Boolean(
+                localSettings
+            )
     };
-
-}
-
-
-/* =====================================================
-   TIEMPO REAL
-===================================================== */
-
-function subscribeOrders(callback) {
-
-    let unsubscribe =
-        () => {};
-
-    let cancelled =
-        false;
-
-    ensureAnonymousSession()
-        .then(
-            () => {
-
-                if (cancelled) {
-                    return;
-                }
-
-                const ordersQuery =
-                    query(
-                        collection(
-                            db,
-                            ORDERS_COLLECTION
-                        ),
-                        orderBy(
-                            "createdAt",
-                            "desc"
-                        )
-                    );
-
-                unsubscribe =
-                    onSnapshot(
-                        ordersQuery,
-                        snapshot => {
-
-                            const orders =
-                                snapshot.docs.map(
-                                    item =>
-                                        normalizeOrder(
-                                            item.data(),
-                                            item.id
-                                        )
-                                );
-
-                            cacheOrders(
-                                orders
-                            );
-
-                            callback(
-                                orders
-                            );
-
-                        },
-                        error => {
-
-                            console.error(
-                                "Error sincronizando pedidos:",
-                                error
-                            );
-
-                        }
-                    );
-
-            }
-        )
-        .catch(
-            error => {
-
-                console.error(
-                    "No se pudo iniciar la sincronización:",
-                    error
-                );
-
-            }
-        );
-
-    return () => {
-
-        cancelled = true;
-
-        unsubscribe();
-
-    };
-
 }
 
 
@@ -1249,17 +1603,22 @@ const PisadaBacanaDB = {
     getOrders,
     getOrder,
     saveOrder,
-    deleteOrder,
+
+    deleteOrder:
+        removeOrder,
 
     getNextOrderCode,
 
     getSettings,
     saveSettings,
 
-    migrateLocalDataOnce,
+    subscribeOrders,
+    subscribeSettings,
 
-    subscribeOrders
+    replaceOrders,
+    deleteAllOrders,
 
+    migrateLocalDataOnce
 };
 
 
