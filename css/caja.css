@@ -2740,3 +2740,301 @@ textarea:focus-visible {
         animation-iteration-count: 1 !important;
     }
 }
+
+/* =====================================================
+   CAJA — MOBILE UI FINAL
+===================================================== */
+
+@media (max-width: 820px) {
+    .content {
+        padding: 26px 20px 42px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        min-height: 124px;
+        padding: 19px;
+        gap: 15px;
+        border-radius: 20px;
+        border: 1px solid #e8edf5;
+        box-shadow: 0 8px 24px rgba(20, 38, 78, 0.055);
+    }
+
+    .finance-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .panel,
+    .finance-panel,
+    .cash-panel {
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        min-height: 64px;
+        padding: 17px 19px;
+    }
+
+    .panel-body {
+        padding: 18px;
+    }
+
+    .payment-method,
+    .payment-method-row,
+    .method-row,
+    .pending-item,
+    .balance-item {
+        min-height: 62px;
+        padding: 13px 14px;
+        border-radius: 14px;
+    }
+
+    .movements-toolbar,
+    .panel-toolbar,
+    .filters {
+        gap: 12px;
+        padding: 18px;
+    }
+
+    .search-box,
+    .sort-select,
+    .filter-select,
+    .period-select {
+        min-height: 48px;
+        border-radius: 13px;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 820px;
+    }
+}
+
+@media (max-width: 600px) {
+    .topbar {
+        min-height: 74px;
+        height: auto;
+        padding:
+            max(10px, env(safe-area-inset-top))
+            14px
+            10px;
+    }
+
+    .topbar h1 {
+        font-size: 16px;
+    }
+
+    .topbar p {
+        display: none;
+    }
+
+    .content {
+        padding:
+            22px 16px
+            calc(38px + env(safe-area-inset-bottom));
+    }
+
+    .page-heading {
+        margin-bottom: 20px;
+    }
+
+    .page-heading h2 {
+        font-size: 23px;
+        line-height: 1.2;
+    }
+
+    .page-heading p {
+        margin-top: 7px;
+        font-size: 13px;
+        line-height: 1.55;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 13px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        min-height: 106px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 17px;
+        padding: 18px;
+        border-radius: 19px;
+    }
+
+    .stat-icon {
+        width: 52px;
+        height: 52px;
+        flex: 0 0 52px;
+        border-radius: 16px;
+    }
+
+    .stat-card > div:not(.stat-icon) {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .stat-card p,
+    .stat-label {
+        margin-bottom: 5px;
+        font-size: 12px;
+    }
+
+    .stat-card strong,
+    .stat-value {
+        font-size: 26px;
+        line-height: 1.1;
+        overflow-wrap: anywhere;
+    }
+
+    .finance-grid {
+        gap: 15px;
+    }
+
+    .panel,
+    .finance-panel,
+    .cash-panel {
+        border-radius: 18px;
+    }
+
+    .panel-header {
+        min-height: 62px;
+        padding: 16px;
+    }
+
+    .panel-header h3 {
+        font-size: 15px;
+    }
+
+    .panel-body {
+        padding: 16px;
+    }
+
+    .payment-methods,
+    .payment-method-list,
+    .methods-list,
+    .pending-list,
+    .balances-list,
+    .pending-balances {
+        gap: 10px;
+    }
+
+    .payment-method,
+    .payment-method-row,
+    .method-row,
+    .pending-item,
+    .balance-item {
+        min-height: 64px;
+        padding: 13px;
+        border-radius: 15px;
+    }
+
+    .payment-method-info strong,
+    .method-info strong,
+    .pending-item strong,
+    .balance-item strong {
+        font-size: 13px;
+    }
+
+    .payment-method-info span,
+    .method-info span,
+    .pending-item span,
+    .balance-item span {
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .movements-toolbar,
+    .panel-toolbar,
+    .filters {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .search-box,
+    .sort-select,
+    .filter-select,
+    .period-select {
+        width: 100%;
+        min-height: 50px;
+        font-size: 16px;
+    }
+
+    .cash-filters,
+    .status-filters,
+    .filters-row {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 0 16px 16px;
+        scrollbar-width: none;
+    }
+
+    .cash-filters::-webkit-scrollbar,
+    .status-filters::-webkit-scrollbar,
+    .filters-row::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filter-button {
+        min-height: 44px;
+        flex: 0 0 auto;
+        padding: 0 16px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    table {
+        min-width: 780px;
+    }
+
+    th {
+        padding: 12px 14px;
+        font-size: 10px;
+    }
+
+    td {
+        padding: 14px;
+        font-size: 12px;
+    }
+
+    .drawer {
+        width: 100%;
+        max-width: none;
+        height: 100dvh;
+        border-radius: 0;
+    }
+
+    .drawer-content {
+        padding: 18px 16px 100px;
+    }
+
+    .payment-summary,
+    .finance-summary {
+        padding: 17px;
+        border-radius: 17px;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
