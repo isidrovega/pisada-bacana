@@ -1,11 +1,18 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
+/* =====================================================
+   PISADA BACANA
+   REPORTES — RESPONSIVE / TOUCH FIRST
+===================================================== */
+
 :root {
     --blue: #1757d7;
+    --blue-hover: #104bc1;
     --blue-dark: #071c44;
     --blue-soft: #edf3ff;
 
     --red: #ed3045;
+    --red-dark: #bd1e31;
     --red-soft: #fff0f2;
 
     --green: #19a974;
@@ -17,7 +24,8 @@
     --orange: #df8615;
     --orange-soft: #fff5e7;
 
-    --gray-soft: #eef1f5;
+    --yellow: #c38a11;
+    --yellow-soft: #fff8df;
 
     --background: #f5f7fb;
     --surface: #ffffff;
@@ -28,11 +36,24 @@
     --border: #e6eaf0;
 
     --sidebar-width: 245px;
+
+    --radius-sm: 10px;
     --radius: 16px;
+    --radius-lg: 20px;
 
     --shadow:
         0 12px 35px rgba(20, 38, 78, 0.07);
+
+    --shadow-card:
+        0 8px 26px rgba(20, 38, 78, 0.06);
+
+    --transition: 0.22s ease;
 }
+
+
+/* =====================================================
+   RESET
+===================================================== */
 
 * {
     box-sizing: border-box;
@@ -41,21 +62,32 @@
 }
 
 html {
+    min-width: 320px;
+
     scroll-behavior: smooth;
+
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
+    min-width: 320px;
     min-height: 100vh;
+
+    overflow-x: hidden;
 
     font-family: "Inter", Arial, sans-serif;
 
     background: var(--background);
     color: var(--text);
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 button,
 input,
-select {
+select,
+textarea {
     font: inherit;
 }
 
@@ -73,10 +105,26 @@ a {
     text-decoration: none;
 }
 
+img {
+    max-width: 100%;
+}
 
-/* =========================
-   SIDEBAR
-========================= */
+button,
+a,
+input,
+select,
+textarea {
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =====================================================
+   APP / SIDEBAR
+===================================================== */
+
+.app {
+    min-height: 100vh;
+}
 
 .sidebar {
     position: fixed;
@@ -85,22 +133,28 @@ a {
 
     width: var(--sidebar-width);
     height: 100vh;
+    height: 100dvh;
 
     display: flex;
     flex-direction: column;
 
     padding: 25px 18px 20px;
 
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
     background: var(--blue-dark);
     color: white;
 
-    z-index: 100;
+    z-index: 220;
 }
 
 .brand {
     display: flex;
     align-items: center;
     gap: 12px;
+
+    flex-shrink: 0;
 
     padding: 0 8px 30px;
 }
@@ -111,6 +165,8 @@ a {
 
     display: grid;
     place-items: center;
+
+    flex-shrink: 0;
 
     border-radius: 14px;
 
@@ -123,8 +179,17 @@ a {
             var(--red) 100%
         );
 
+    color: white;
+
     font-size: 14px;
     font-weight: 800;
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.14);
+}
+
+.brand-text {
+    min-width: 0;
 }
 
 .brand-text strong,
@@ -133,7 +198,13 @@ a {
 }
 
 .brand-text strong {
+    color: white;
+
     font-size: 17px;
+    font-weight: 800;
+
+    line-height: 1.1;
+
     text-transform: uppercase;
 }
 
@@ -184,13 +255,18 @@ a {
     font-weight: 600;
 
     transition:
-        background 0.2s ease,
-        color 0.2s ease;
+        background var(--transition),
+        color var(--transition),
+        transform var(--transition);
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.07);
     color: white;
+}
+
+.nav-item:active {
+    transform: scale(0.985);
 }
 
 .nav-item.active {
@@ -203,6 +279,9 @@ a {
 
 .nav-icon {
     width: 21px;
+
+    flex-shrink: 0;
+
     text-align: center;
 }
 
@@ -219,17 +298,15 @@ a {
     border-radius: 999px;
 
     background: rgba(255, 255, 255, 0.12);
+    color: white;
 
     font-size: 9px;
     font-weight: 800;
 }
 
-.future-link {
-    opacity: 0.72;
-}
-
 .sidebar-footer {
     margin-top: auto;
+    padding-top: 22px;
 }
 
 .profile {
@@ -250,12 +327,19 @@ a {
     display: grid;
     place-items: center;
 
+    flex-shrink: 0;
+
     border-radius: 50%;
 
     background: var(--red);
+    color: white;
 
     font-size: 12px;
     font-weight: 800;
+}
+
+.profile > div:last-child {
+    min-width: 0;
 }
 
 .profile strong,
@@ -264,23 +348,36 @@ a {
 }
 
 .profile strong {
+    overflow: hidden;
+
+    color: white;
+
     font-size: 11px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .profile span {
+    overflow: hidden;
+
     margin-top: 3px;
 
     color: #7f8dab;
 
     font-size: 9px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 
-/* =========================
-   MAIN
-========================= */
+/* =====================================================
+   MAIN / TOPBAR
+===================================================== */
 
 .main {
+    min-width: 0;
     min-height: 100vh;
 
     margin-left: var(--sidebar-width);
@@ -295,6 +392,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
 
     padding: 0 32px;
 
@@ -302,91 +400,153 @@ a {
 
     background: rgba(255, 255, 255, 0.94);
 
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
 
-    z-index: 50;
+    z-index: 100;
 }
 
 .topbar-left {
+    min-width: 0;
+
     display: flex;
     align-items: center;
     gap: 14px;
 }
 
+.topbar-left > div {
+    min-width: 0;
+}
+
 .topbar h1 {
+    overflow: hidden;
+
+    color: var(--text);
+
     font-size: 18px;
+    font-weight: 800;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .topbar p {
+    overflow: hidden;
+
     margin-top: 4px;
 
     color: var(--text-soft);
 
     font-size: 10px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .menu-button {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
 
     display: none;
+    place-items: center;
 
-    border-radius: 10px;
+    flex-shrink: 0;
+
+    border-radius: 12px;
 
     background: #f1f3f6;
     color: var(--blue-dark);
 
-    font-size: 18px;
+    font-size: 20px;
 }
 
-.primary-button {
-    min-height: 42px;
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.primary-button,
+.secondary-button {
+    min-height: 44px;
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 7px;
 
     padding: 0 17px;
 
-    border-radius: 10px;
+    border-radius: 11px;
 
+    font-size: 10px;
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    transition:
+        background var(--transition),
+        box-shadow var(--transition),
+        transform var(--transition);
+}
+
+.primary-button {
     background: var(--blue);
     color: white;
 
     box-shadow:
         0 8px 22px rgba(23, 87, 215, 0.18);
-
-    font-size: 11px;
-    font-weight: 700;
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
 }
 
 .primary-button:hover {
+    background: var(--blue-hover);
+
     transform: translateY(-1px);
 
     box-shadow:
-        0 10px 26px rgba(23, 87, 215, 0.26);
+        0 10px 26px rgba(23, 87, 215, 0.24);
 }
+
+.secondary-button {
+    border: 1px solid var(--border);
+
+    background: white;
+    color: var(--text);
+}
+
+.primary-button:active,
+.secondary-button:active {
+    transform: scale(0.98);
+}
+
+
+/* =====================================================
+   CONTENT
+===================================================== */
 
 .content {
-    padding: 32px;
+    width: 100%;
+    max-width: 1600px;
+
+    margin: 0 auto;
+    padding: 30px 32px 40px;
 }
 
 
-/* =========================
-   HEADING
-========================= */
+/* =====================================================
+   REPORT HEADING
+===================================================== */
 
 .report-heading {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 20px;
+    gap: 22px;
 
-    margin-bottom: 23px;
+    margin-bottom: 24px;
+}
+
+.report-heading > div:first-child {
+    min-width: 0;
 }
 
 .eyebrow {
@@ -396,46 +556,64 @@ a {
 
     color: var(--blue);
 
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 800;
 
-    letter-spacing: 1.5px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
 }
 
 .report-heading h2 {
-    font-size: 25px;
+    color: var(--text);
 
-    letter-spacing: -0.7px;
+    font-size: clamp(22px, 2vw, 28px);
+    font-weight: 800;
+
+    line-height: 1.15;
 }
 
 .report-heading p {
-    margin-top: 7px;
+    max-width: 650px;
+
+    margin-top: 8px;
 
     color: var(--text-soft);
 
     font-size: 11px;
+
+    line-height: 1.6;
 }
 
+
+/* =====================================================
+   PERIOD CONTROL
+===================================================== */
+
 .period-control {
-    display: flex;
-    align-items: center;
-    gap: 9px;
+    min-width: 180px;
+
+    flex-shrink: 0;
 }
 
 .period-control label {
+    display: block;
+
+    margin-bottom: 6px;
+
     color: var(--text-soft);
 
-    font-size: 9px;
-    font-weight: 600;
+    font-size: 8px;
+    font-weight: 700;
 }
 
 .period-control select {
-    height: 41px;
+    width: 100%;
+    height: 44px;
 
     padding: 0 12px;
 
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 11px;
 
     outline: none;
 
@@ -443,12 +621,24 @@ a {
     color: var(--text);
 
     font-size: 9px;
+    font-weight: 600;
+
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+.period-control select:focus {
+    border-color: var(--blue);
+
+    box-shadow:
+        0 0 0 3px rgba(23, 87, 215, 0.08);
 }
 
 
-/* =========================
+/* =====================================================
    STATS
-========================= */
+===================================================== */
 
 .stats-grid {
     display: grid;
@@ -456,39 +646,52 @@ a {
     grid-template-columns:
         repeat(4, minmax(0, 1fr));
 
-    gap: 15px;
+    gap: 16px;
 
     margin-bottom: 18px;
 }
 
 .stat-card {
-    min-height: 115px;
+    min-width: 0;
+    min-height: 122px;
 
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 15px;
 
-    padding: 18px;
+    padding: 20px;
 
     border: 1px solid var(--border);
     border-radius: var(--radius);
 
     background: white;
 
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-card);
+
+    transition:
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 15px 35px rgba(20, 38, 78, 0.09);
 }
 
 .stat-icon {
-    width: 45px;
-    height: 45px;
+    width: 48px;
+    height: 48px;
 
     display: grid;
     place-items: center;
 
     flex-shrink: 0;
 
-    border-radius: 12px;
+    border-radius: 14px;
 
+    font-size: 15px;
     font-weight: 800;
 }
 
@@ -512,6 +715,12 @@ a {
     color: var(--purple);
 }
 
+.stat-data {
+    min-width: 0;
+
+    flex: 1;
+}
+
 .stat-data span,
 .stat-data strong,
 .stat-data small {
@@ -519,30 +728,50 @@ a {
 }
 
 .stat-data span {
+    overflow: hidden;
+
     margin-bottom: 5px;
 
     color: var(--text-soft);
 
     font-size: 9px;
     font-weight: 600;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .stat-data strong {
+    overflow: hidden;
+
+    color: var(--text);
+
     font-size: 22px;
+    font-weight: 800;
+
+    line-height: 1.1;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .stat-data small {
-    margin-top: 4px;
+    overflow: hidden;
 
-    color: #a0a7b4;
+    margin-top: 5px;
+
+    color: #9aa2b0;
 
     font-size: 8px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 
-/* =========================
-   PANELS
-========================= */
+/* =====================================================
+   REPORT GRID
+===================================================== */
 
 .report-grid {
     display: grid;
@@ -553,9 +782,18 @@ a {
     gap: 18px;
 
     margin-bottom: 18px;
+
+    align-items: stretch;
 }
 
+
+/* =====================================================
+   PANELS
+===================================================== */
+
 .panel {
+    min-width: 0;
+
     overflow: hidden;
 
     border: 1px solid var(--border);
@@ -567,16 +805,31 @@ a {
 }
 
 .panel-header {
+    min-height: 76px;
+
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 15px;
 
-    padding: 21px 22px 17px;
+    padding: 18px 22px 16px;
+
+    border-bottom: 1px solid #f0f2f6;
+}
+
+.panel-header > div {
+    min-width: 0;
+}
+
+.panel-header .eyebrow {
+    margin-bottom: 5px;
 }
 
 .panel-header h3 {
-    font-size: 15px;
+    color: var(--text);
+
+    font-size: 14px;
+    font-weight: 800;
 }
 
 .panel-header p {
@@ -584,63 +837,66 @@ a {
 
     color: var(--text-soft);
 
-    font-size: 8px;
+    font-size: 9px;
+
+    line-height: 1.5;
 }
 
 .panel-total {
+    flex-shrink: 0;
+
     color: var(--blue);
 
-    font-size: 17px;
+    font-size: 16px;
+    font-weight: 800;
+
+    white-space: nowrap;
 }
 
 
-/* =========================
+/* =====================================================
    CHART
-========================= */
+===================================================== */
+
+.chart-panel {
+    min-height: 330px;
+}
 
 .chart-container {
     min-height: 250px;
 
-    padding: 5px 22px 22px;
+    display: flex;
+    align-items: flex-end;
+
+    padding: 20px 22px 24px;
 }
 
 .bar-chart {
-    height: 220px;
+    width: 100%;
+    min-height: 205px;
 
     display: flex;
     align-items: flex-end;
+    justify-content: stretch;
     gap: 10px;
-
-    padding: 15px 5px 0;
-
-    border-bottom: 1px solid var(--border);
-
-    background:
-        repeating-linear-gradient(
-            to top,
-            transparent 0,
-            transparent 43px,
-            #f0f2f6 44px
-        );
 }
 
-.bar-column {
+.bar-item,
+.chart-item {
     min-width: 0;
-    height: 100%;
+    height: 205px;
 
     display: flex;
     flex: 1;
     flex-direction: column;
-    align-items: center;
     justify-content: flex-end;
-
-    position: relative;
+    align-items: center;
+    gap: 7px;
 }
 
-.bar-value {
-    margin-bottom: 5px;
-
-    color: var(--text-soft);
+.bar-value,
+.chart-value {
+    color: var(--text);
 
     font-size: 7px;
     font-weight: 700;
@@ -648,82 +904,145 @@ a {
     white-space: nowrap;
 }
 
-.bar {
+.bar-track,
+.chart-track {
+    position: relative;
+
     width: min(38px, 70%);
+    height: 155px;
 
-    min-height: 3px;
+    display: flex;
+    align-items: flex-end;
 
-    border-radius: 7px 7px 2px 2px;
+    overflow: hidden;
+
+    border-radius: 9px 9px 4px 4px;
+
+    background: #f0f3f8;
+}
+
+.bar-fill,
+.chart-bar {
+    width: 100%;
+    min-height: 4px;
+
+    border-radius: 9px 9px 4px 4px;
 
     background:
         linear-gradient(
             180deg,
-            #3978ed,
-            var(--blue)
+            #3f79ef 0%,
+            var(--blue) 100%
         );
+
+    box-shadow:
+        0 6px 14px rgba(23, 87, 215, 0.15);
 
     transition:
         height 0.35s ease;
 }
 
-.bar-label {
-    position: absolute;
-    top: calc(100% + 8px);
+.bar-label,
+.chart-label {
+    max-width: 72px;
 
-    color: #9299a7;
+    overflow: hidden;
+
+    color: var(--text-soft);
 
     font-size: 7px;
-    font-weight: 700;
+    font-weight: 600;
 
+    text-align: center;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 
-/* =========================
-   STATUS
-========================= */
+/* =====================================================
+   STATUS REPORT
+===================================================== */
 
 .status-report {
-    padding: 0 22px 20px;
+    padding: 4px 22px 20px;
 }
 
+.status-report-item,
 .status-item {
-    margin-bottom: 15px;
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr) auto;
+
+    align-items: center;
+    gap: 12px;
+
+    min-height: 53px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid #f0f2f6;
 }
 
+.status-report-item:last-child,
 .status-item:last-child {
-    margin-bottom: 0;
+    border-bottom: 0;
 }
 
 .status-info {
+    min-width: 0;
+
     display: flex;
     align-items: center;
-    justify-content: space-between;
-
-    margin-bottom: 7px;
+    gap: 10px;
 }
 
-.status-info span {
-    color: var(--text-soft);
+.status-dot {
+    width: 9px;
+    height: 9px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: var(--blue);
+}
+
+.status-name {
+    overflow: hidden;
+
+    color: var(--text);
 
     font-size: 9px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.status-info strong {
-    font-size: 9px;
+.status-count,
+.status-value {
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    white-space: nowrap;
 }
 
-.progress {
-    height: 7px;
+.status-bar {
+    grid-column: 1 / -1;
+
+    height: 5px;
 
     overflow: hidden;
 
     border-radius: 999px;
 
-    background: #eef1f5;
+    background: #edf0f5;
 }
 
-.progress-bar {
+.status-bar-fill {
     height: 100%;
 
     border-radius: inherit;
@@ -731,26 +1050,10 @@ a {
     background: var(--blue);
 }
 
-.progress-bar.red {
-    background: var(--red);
-}
 
-.progress-bar.green {
-    background: var(--green);
-}
-
-.progress-bar.purple {
-    background: var(--purple);
-}
-
-.progress-bar.orange {
-    background: var(--orange);
-}
-
-
-/* =========================
+/* =====================================================
    RANKINGS
-========================= */
+===================================================== */
 
 .ranking-list {
     padding: 0 22px 20px;
@@ -771,15 +1074,15 @@ a {
 }
 
 .rank-number {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
 
     display: grid;
     place-items: center;
 
     flex-shrink: 0;
 
-    border-radius: 8px;
+    border-radius: 9px;
 
     background: var(--blue-soft);
     color: var(--blue);
@@ -802,7 +1105,10 @@ a {
 .ranking-info strong {
     overflow: hidden;
 
+    color: var(--text);
+
     font-size: 9px;
+    font-weight: 800;
 
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -817,6 +1123,10 @@ a {
 }
 
 .ranking-value {
+    flex-shrink: 0;
+
+    color: var(--text);
+
     font-size: 10px;
     font-weight: 800;
 
@@ -840,15 +1150,15 @@ a {
 }
 
 
-/* =========================
+/* =====================================================
    PRODUCTS
-========================= */
+===================================================== */
 
 .product-report {
     display: grid;
 
     grid-template-columns:
-        repeat(2, 1fr);
+        repeat(2, minmax(0, 1fr));
 
     gap: 12px;
 
@@ -856,6 +1166,8 @@ a {
 }
 
 .product-card {
+    min-width: 0;
+
     display: flex;
     align-items: center;
     gap: 12px;
@@ -893,6 +1205,10 @@ a {
     color: var(--red);
 }
 
+.product-card > div:last-child {
+    min-width: 0;
+}
+
 .product-card span,
 .product-card strong,
 .product-card small {
@@ -906,9 +1222,17 @@ a {
 }
 
 .product-card strong {
+    overflow: hidden;
+
     margin-top: 4px;
 
+    color: var(--text);
+
     font-size: 18px;
+    font-weight: 800;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .product-card small {
@@ -920,9 +1244,9 @@ a {
 }
 
 
-/* =========================
+/* =====================================================
    SUMMARY
-========================= */
+===================================================== */
 
 .summary-list {
     padding: 0 22px 20px;
@@ -933,6 +1257,8 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 15px;
+
+    min-height: 50px;
 
     padding: 13px 0;
 
@@ -950,20 +1276,27 @@ a {
 }
 
 .summary-row strong {
+    color: var(--text);
+
     font-size: 10px;
+    font-weight: 800;
+
+    text-align: right;
 }
 
 
-/* =========================
-   ORDERS TABLE
-========================= */
+/* =====================================================
+   ORDERS PANEL
+===================================================== */
 
 .orders-panel {
-    margin-bottom: 30px;
+    margin-bottom: 18px;
 }
 
 .order-count-label {
-    padding: 6px 9px;
+    flex-shrink: 0;
+
+    padding: 7px 10px;
 
     border-radius: 999px;
 
@@ -972,10 +1305,21 @@ a {
 
     font-size: 8px;
     font-weight: 800;
+
+    white-space: nowrap;
 }
 
+
+/* =====================================================
+   TABLE
+===================================================== */
+
 .table-wrapper {
+    width: 100%;
+
     overflow-x: auto;
+
+    -webkit-overflow-scrolling: touch;
 }
 
 table {
@@ -983,6 +1327,8 @@ table {
     min-width: 850px;
 
     border-collapse: collapse;
+
+    background: white;
 }
 
 thead {
@@ -1001,6 +1347,8 @@ th {
 
     text-align: left;
     text-transform: uppercase;
+
+    white-space: nowrap;
 }
 
 td {
@@ -1008,9 +1356,15 @@ td {
 
     border-top: 1px solid #f0f2f6;
 
+    color: var(--text);
+
     font-size: 9px;
 
     vertical-align: middle;
+}
+
+tbody tr {
+    transition: background var(--transition);
 }
 
 tbody tr:hover {
@@ -1021,6 +1375,8 @@ tbody tr:hover {
     color: var(--blue);
 
     font-weight: 800;
+
+    white-space: nowrap;
 }
 
 .cell-main,
@@ -1029,6 +1385,8 @@ tbody tr:hover {
 }
 
 .cell-main {
+    color: var(--text);
+
     font-weight: 700;
 }
 
@@ -1042,8 +1400,11 @@ tbody tr:hover {
 
 .status-badge {
     display: inline-flex;
+    align-items: center;
 
-    padding: 6px 8px;
+    min-height: 27px;
+
+    padding: 0 9px;
 
     border-radius: 999px;
 
@@ -1052,6 +1413,8 @@ tbody tr:hover {
 
     font-size: 8px;
     font-weight: 800;
+
+    white-space: nowrap;
 }
 
 .status-badge.delivered {
@@ -1063,13 +1426,22 @@ tbody tr:hover {
     color: var(--red);
 
     font-weight: 800;
+
+    white-space: nowrap;
 }
 
 .paid-money {
     color: var(--green);
 
     font-weight: 800;
+
+    white-space: nowrap;
 }
+
+
+/* =====================================================
+   TABLE EMPTY
+===================================================== */
 
 .table-empty {
     display: none;
@@ -1084,15 +1456,15 @@ tbody tr:hover {
 }
 
 .empty-icon {
-    width: 55px;
-    height: 55px;
+    width: 56px;
+    height: 56px;
 
     display: grid;
     place-items: center;
 
     margin: 0 auto 14px;
 
-    border-radius: 15px;
+    border-radius: 16px;
 
     background: var(--blue-soft);
     color: var(--blue);
@@ -1103,19 +1475,24 @@ tbody tr:hover {
 .table-empty h3 {
     margin-bottom: 6px;
 
+    color: var(--text);
+
     font-size: 14px;
+    font-weight: 800;
 }
 
 .table-empty p {
     color: var(--text-soft);
 
     font-size: 10px;
+
+    line-height: 1.6;
 }
 
 
-/* =========================
+/* =====================================================
    OVERLAY
-========================= */
+===================================================== */
 
 .overlay {
     position: fixed;
@@ -1123,13 +1500,14 @@ tbody tr:hover {
 
     visibility: hidden;
 
-    background: rgba(4, 14, 34, 0.55);
+    background: rgba(4, 14, 34, 0.58);
 
     opacity: 0;
 
     backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
 
-    z-index: 150;
+    z-index: 180;
 
     transition:
         opacity 0.25s ease,
@@ -1142,145 +1520,817 @@ tbody tr:hover {
 }
 
 
-/* =========================
-   RESPONSIVE
-========================= */
+/* =====================================================
+   ACCESSIBILITY
+===================================================== */
 
-@media (max-width: 1100px) {
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid rgba(23, 87, 215, 0.20);
+    outline-offset: 2px;
+}
+
+
+/* =====================================================
+   SMALL DESKTOP
+===================================================== */
+
+@media (max-width: 1180px) {
+
+    .content {
+        padding: 28px 24px 36px;
+    }
 
     .stats-grid {
         grid-template-columns:
-            repeat(2, 1fr);
+            repeat(2, minmax(0, 1fr));
     }
 
+    .report-grid {
+        gap: 15px;
+    }
 }
 
-@media (max-width: 900px) {
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 1024px) {
 
     .report-grid {
         grid-template-columns: 1fr;
     }
 
+    .chart-panel {
+        min-height: 320px;
+    }
+
+    .chart-container {
+        min-height: 240px;
+    }
+
+    .bar-chart {
+        min-height: 195px;
+    }
+
+    .bar-item,
+    .chart-item {
+        height: 195px;
+    }
+
+    .bar-track,
+    .chart-track {
+        height: 145px;
+    }
 }
+
+
+/* =====================================================
+   TABLET PORTRAIT / MOBILE NAV
+===================================================== */
 
 @media (max-width: 820px) {
 
     .sidebar {
-        transform: translateX(-100%);
+        width: min(290px, 84vw);
+
+        padding:
+            calc(20px + env(safe-area-inset-top))
+            16px
+            calc(18px + env(safe-area-inset-bottom));
+
+        box-shadow:
+            18px 0 55px rgba(4, 14, 34, 0.24);
+
+        transform: translateX(-105%);
 
         transition:
-            transform 0.25s ease;
-
-        z-index: 220;
+            transform 0.27s cubic-bezier(
+                0.4,
+                0,
+                0.2,
+                1
+            );
     }
 
     .sidebar.open {
         transform: translateX(0);
     }
 
+    .brand {
+        padding: 0 8px 24px;
+    }
+
+    .navigation {
+        gap: 7px;
+    }
+
+    .nav-item {
+        min-height: 52px;
+
+        padding: 0 14px;
+
+        border-radius: 12px;
+
+        font-size: 14px;
+    }
+
+    .nav-icon {
+        width: 24px;
+
+        font-size: 16px;
+    }
+
+    .profile-avatar {
+        width: 42px;
+        height: 42px;
+    }
+
+    .profile strong {
+        font-size: 12px;
+    }
+
+    .profile span {
+        font-size: 10px;
+    }
+
     .main {
         margin-left: 0;
     }
 
-    .menu-button {
-        display: block;
-    }
-
     .topbar {
+        height: 72px;
+
         padding: 0 18px;
     }
 
-    .content {
-        padding: 23px 18px;
-    }
-
-}
-
-@media (max-width: 600px) {
-
-    .topbar {
-        height: 70px;
+    .menu-button {
+        display: grid;
     }
 
     .topbar h1 {
-        font-size: 15px;
+        font-size: 17px;
     }
 
-    .topbar p {
-        display: none;
+    .topbar .primary-button {
+        min-height: 44px;
+
+        padding: 0 15px;
     }
 
     .content {
-        padding: 18px 13px;
+        max-width: none;
+
+        padding:
+            24px 18px
+            calc(36px + env(safe-area-inset-bottom));
     }
 
     .report-heading {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .period-control {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .period-control select {
-        width: 100%;
+        margin-bottom: 20px;
     }
 
     .stats-grid {
-        grid-template-columns: 1fr;
+        gap: 12px;
     }
 
-    .product-report {
-        grid-template-columns: 1fr;
+    table {
+        min-width: 800px;
     }
-
-    .bar-chart {
-        gap: 5px;
-    }
-
-    .bar-value {
-        display: none;
-    }
-
 }
 
 
-/* =========================
-   IMPRESIÓN
-========================= */
+/* =====================================================
+   PHONE
+===================================================== */
+
+@media (max-width: 600px) {
+
+    /* TOPBAR */
+
+    .topbar {
+        min-height: 70px;
+        height: auto;
+
+        padding: 11px 14px;
+
+        padding-top:
+            max(
+                11px,
+                env(safe-area-inset-top)
+            );
+
+        gap: 10px;
+    }
+
+    .topbar-left {
+        gap: 10px;
+    }
+
+    .topbar h1 {
+        font-size: 16px;
+    }
+
+    .topbar p {
+        max-width: 120px;
+
+        font-size: 8px;
+    }
+
+    .topbar .primary-button {
+        min-height: 44px;
+
+        padding: 0 11px;
+
+        font-size: 8.5px;
+    }
+
+
+    /* CONTENT */
+
+    .content {
+        padding:
+            20px 14px
+            calc(30px + env(safe-area-inset-bottom));
+    }
+
+
+    /* HEADING + PERIOD */
+
+    .report-heading {
+        display: grid;
+
+        grid-template-columns: 1fr;
+
+        gap: 15px;
+
+        margin-bottom: 18px;
+    }
+
+    .report-heading h2 {
+        font-size: 21px;
+    }
+
+    .report-heading p {
+        margin-top: 7px;
+
+        font-size: 10px;
+    }
+
+    .period-control {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .period-control label {
+        font-size: 9px;
+    }
+
+    .period-control select {
+        height: 48px;
+
+        font-size: 16px;
+    }
+
+
+    /* STATS 2 x 2 */
+
+    .stats-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 9px;
+
+        margin-bottom: 14px;
+    }
+
+    .stat-card {
+        min-height: 145px;
+
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 11px;
+
+        padding: 14px;
+
+        border-radius: 15px;
+    }
+
+    .stat-card:hover {
+        transform: none;
+    }
+
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+
+        border-radius: 12px;
+
+        font-size: 14px;
+    }
+
+    .stat-data {
+        width: 100%;
+    }
+
+    .stat-data span {
+        font-size: 9px;
+
+        white-space: normal;
+    }
+
+    .stat-data strong {
+        font-size: 20px;
+    }
+
+    .stat-data small {
+        font-size: 7.5px;
+
+        white-space: normal;
+
+        line-height: 1.35;
+    }
+
+
+    /* REPORT GRID */
+
+    .report-grid {
+        grid-template-columns: 1fr;
+
+        gap: 14px;
+
+        margin-bottom: 14px;
+    }
+
+    .panel {
+        border-radius: 15px;
+    }
+
+    .panel-header {
+        min-height: 68px;
+
+        padding:
+            16px 15px
+            14px;
+    }
+
+    .panel-header h3 {
+        font-size: 14px;
+    }
+
+    .panel-header p {
+        font-size: 9px;
+    }
+
+    .panel-total {
+        font-size: 14px;
+    }
+
+
+    /* CHART */
+
+    .chart-panel {
+        min-height: 300px;
+    }
+
+    .chart-container {
+        min-height: 225px;
+
+        overflow-x: auto;
+
+        padding:
+            18px 15px
+            20px;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .bar-chart {
+        min-width: 430px;
+        min-height: 185px;
+
+        gap: 8px;
+    }
+
+    .bar-item,
+    .chart-item {
+        height: 185px;
+    }
+
+    .bar-track,
+    .chart-track {
+        height: 135px;
+    }
+
+    .bar-label,
+    .chart-label,
+    .bar-value,
+    .chart-value {
+        font-size: 7px;
+    }
+
+
+    /* STATUS */
+
+    .status-report {
+        padding:
+            3px 15px
+            15px;
+    }
+
+    .status-report-item,
+    .status-item {
+        min-height: 56px;
+    }
+
+    .status-name {
+        font-size: 10px;
+    }
+
+    .status-count,
+    .status-value {
+        font-size: 11px;
+    }
+
+
+    /* RANKINGS */
+
+    .ranking-list {
+        padding:
+            0 15px
+            15px;
+    }
+
+    .ranking-item {
+        min-height: 58px;
+
+        padding: 12px 0;
+    }
+
+    .rank-number {
+        width: 34px;
+        height: 34px;
+
+        border-radius: 10px;
+
+        font-size: 10px;
+    }
+
+    .ranking-info strong {
+        font-size: 10px;
+    }
+
+    .ranking-info span {
+        font-size: 8px;
+    }
+
+    .ranking-value {
+        font-size: 10px;
+    }
+
+    .panel-empty {
+        padding: 32px 15px;
+
+        font-size: 10px;
+    }
+
+
+    /* PRODUCTS */
+
+    .product-report {
+        grid-template-columns: 1fr;
+
+        gap: 9px;
+
+        padding:
+            0 15px
+            15px;
+    }
+
+    .product-card {
+        min-height: 74px;
+
+        padding: 14px;
+
+        border-radius: 12px;
+    }
+
+    .product-icon {
+        width: 46px;
+        height: 46px;
+
+        border-radius: 12px;
+
+        font-size: 12px;
+    }
+
+    .product-card span {
+        font-size: 9px;
+    }
+
+    .product-card strong {
+        font-size: 20px;
+    }
+
+    .product-card small {
+        font-size: 8px;
+    }
+
+
+    /* SUMMARY */
+
+    .summary-list {
+        padding:
+            0 15px
+            15px;
+    }
+
+    .summary-row {
+        min-height: 55px;
+    }
+
+    .summary-row span {
+        font-size: 9px;
+    }
+
+    .summary-row strong {
+        font-size: 11px;
+    }
+
+
+    /* TABLE */
+
+    .orders-panel {
+        margin-bottom: 14px;
+    }
+
+    .order-count-label {
+        padding: 7px 9px;
+
+        font-size: 8px;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+
+        scrollbar-width: thin;
+
+        scroll-snap-type: x proximity;
+    }
+
+    table {
+        min-width: 760px;
+    }
+
+    th {
+        padding: 10px 12px;
+
+        font-size: 7px;
+    }
+
+    td {
+        padding: 13px 12px;
+
+        font-size: 8.5px;
+    }
+
+    .cell-sub {
+        font-size: 7.5px;
+    }
+
+    .status-badge {
+        min-height: 29px;
+
+        padding: 0 9px;
+
+        font-size: 7.5px;
+    }
+
+    .table-empty {
+        padding: 44px 18px;
+    }
+}
+
+
+/* =====================================================
+   VERY SMALL PHONES
+===================================================== */
+
+@media (max-width: 390px) {
+
+    .topbar {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .topbar p {
+        max-width: 95px;
+    }
+
+    .topbar .primary-button {
+        padding: 0 9px;
+
+        font-size: 8px;
+    }
+
+    .content {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .stats-grid {
+        gap: 8px;
+    }
+
+    .stat-card {
+        min-height: 140px;
+
+        padding: 13px;
+    }
+
+    .stat-data strong {
+        font-size: 18px;
+    }
+
+    .panel-header {
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+
+    .status-report,
+    .ranking-list,
+    .summary-list {
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+
+    .product-report {
+        padding-right: 13px;
+        padding-left: 13px;
+    }
+
+    .ranking-value {
+        font-size: 9px;
+    }
+}
+
+
+/* =====================================================
+   LARGE DESKTOP
+===================================================== */
+
+@media (min-width: 1450px) {
+
+    .content {
+        padding:
+            34px 40px
+            44px;
+    }
+
+    .stats-grid,
+    .report-grid {
+        gap: 20px;
+    }
+
+    .stat-card {
+        min-height: 128px;
+    }
+}
+
+
+/* =====================================================
+   PRINT
+   Para el botón "Imprimir reporte"
+===================================================== */
 
 @media print {
 
+    @page {
+        size: auto;
+        margin: 12mm;
+    }
+
     body {
-        background: white;
+        background: white !important;
+        color: #111827 !important;
     }
 
     .sidebar,
     .topbar,
-    .period-control,
-    .overlay {
+    .overlay,
+    .menu-button,
+    #printReportButton {
         display: none !important;
     }
 
     .main {
-        margin-left: 0;
+        margin-left: 0 !important;
     }
 
     .content {
-        padding: 0;
+        width: 100% !important;
+        max-width: none !important;
+
+        padding: 0 !important;
     }
 
-    .panel,
-    .stat-card {
-        box-shadow: none;
+    .report-heading {
+        margin-bottom: 16px;
+    }
 
-        break-inside: avoid;
+    .period-control {
+        display: none !important;
+    }
+
+    .stats-grid {
+        grid-template-columns:
+            repeat(4, 1fr) !important;
+
+        gap: 8px !important;
     }
 
     .report-grid {
-        break-inside: avoid;
+        grid-template-columns:
+            repeat(2, 1fr) !important;
+
+        gap: 10px !important;
     }
 
+    .stat-card,
+    .panel {
+        break-inside: avoid;
+
+        box-shadow: none !important;
+    }
+
+    .stat-card {
+        min-height: auto !important;
+
+        padding: 12px !important;
+    }
+
+    .chart-panel {
+        min-height: 280px;
+    }
+
+    .chart-container {
+        min-height: 210px;
+
+        overflow: visible !important;
+    }
+
+    .bar-chart {
+        min-width: 0 !important;
+    }
+
+    .orders-panel {
+        break-before: auto;
+    }
+
+    .table-wrapper {
+        overflow: visible !important;
+    }
+
+    table {
+        min-width: 0 !important;
+
+        font-size: 8px;
+    }
+
+    th,
+    td {
+        padding: 7px 6px !important;
+    }
+
+    a {
+        text-decoration: none !important;
+    }
+
+    * {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+}
+
+
+/* =====================================================
+   REDUCED MOTION
+===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
 }
