@@ -2,7 +2,8 @@
 
 /* =====================================================
    PISADA BACANA
-   REPORTES — RESPONSIVE / TOUCH FIRST
+   REPORTES
+   Desktop + Tablet + Mobile
 ===================================================== */
 
 :root {
@@ -24,8 +25,8 @@
     --orange: #df8615;
     --orange-soft: #fff5e7;
 
-    --yellow: #c38a11;
-    --yellow-soft: #fff8df;
+    --yellow: #b57b00;
+    --yellow-soft: #fff7dc;
 
     --background: #f5f7fb;
     --surface: #ffffff;
@@ -33,21 +34,22 @@
     --text: #172033;
     --text-soft: #747d8e;
 
-    --border: #e6eaf0;
+    --border: #e5eaf2;
+    --border-strong: #d8dfeb;
 
     --sidebar-width: 245px;
 
-    --radius-sm: 10px;
-    --radius: 16px;
-    --radius-lg: 20px;
+    --radius-sm: 12px;
+    --radius: 18px;
+    --radius-lg: 22px;
 
     --shadow:
-        0 12px 35px rgba(20, 38, 78, 0.07);
+        0 10px 30px rgba(20, 38, 78, 0.06);
 
-    --shadow-card:
-        0 8px 26px rgba(20, 38, 78, 0.06);
+    --shadow-hover:
+        0 16px 38px rgba(20, 38, 78, 0.09);
 
-    --transition: 0.22s ease;
+    --transition: 0.2s ease;
 }
 
 
@@ -75,13 +77,20 @@ body {
 
     overflow-x: hidden;
 
-    font-family: "Inter", Arial, sans-serif;
+    font-family:
+        "Inter",
+        Arial,
+        sans-serif;
 
     background: var(--background);
     color: var(--text);
 
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+body.no-scroll {
+    overflow: hidden;
 }
 
 button,
@@ -119,12 +128,17 @@ textarea {
 
 
 /* =====================================================
-   APP / SIDEBAR
+   APP
 ===================================================== */
 
 .app {
     min-height: 100vh;
 }
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
 
 .sidebar {
     position: fixed;
@@ -144,7 +158,7 @@ textarea {
     overscroll-behavior: contain;
 
     background: var(--blue-dark);
-    color: white;
+    color: #ffffff;
 
     z-index: 220;
 }
@@ -160,8 +174,8 @@ textarea {
 }
 
 .brand-logo {
-    width: 47px;
-    height: 47px;
+    width: 48px;
+    height: 48px;
 
     display: grid;
     place-items: center;
@@ -179,13 +193,13 @@ textarea {
             var(--red) 100%
         );
 
-    color: white;
+    color: #ffffff;
 
     font-size: 14px;
     font-weight: 800;
 
     box-shadow:
-        0 10px 25px rgba(0, 0, 0, 0.14);
+        0 10px 24px rgba(0, 0, 0, 0.15);
 }
 
 .brand-text {
@@ -198,12 +212,12 @@ textarea {
 }
 
 .brand-text strong {
-    color: white;
+    color: #ffffff;
 
     font-size: 17px;
     font-weight: 800;
 
-    line-height: 1.1;
+    line-height: 1.05;
 
     text-transform: uppercase;
 }
@@ -217,18 +231,19 @@ textarea {
     font-weight: 800;
 
     letter-spacing: 2px;
+
     text-transform: uppercase;
 }
 
 .menu-title {
-    margin: 0 12px 10px;
+    margin: 0 12px 11px;
 
     color: #7182a5;
 
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 800;
 
-    letter-spacing: 1.4px;
+    letter-spacing: 1.3px;
 }
 
 .navigation {
@@ -239,7 +254,7 @@ textarea {
 
 .nav-item {
     width: 100%;
-    min-height: 46px;
+    min-height: 47px;
 
     display: flex;
     align-items: center;
@@ -247,7 +262,7 @@ textarea {
 
     padding: 0 13px;
 
-    border-radius: 10px;
+    border-radius: 11px;
 
     color: #aab7d1;
 
@@ -261,8 +276,10 @@ textarea {
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-    color: white;
+    background:
+        rgba(255, 255, 255, 0.07);
+
+    color: #ffffff;
 }
 
 .nav-item:active {
@@ -271,14 +288,14 @@ textarea {
 
 .nav-item.active {
     background: var(--blue);
-    color: white;
+    color: #ffffff;
 
     box-shadow:
         0 8px 20px rgba(23, 87, 215, 0.25);
 }
 
 .nav-icon {
-    width: 21px;
+    width: 22px;
 
     flex-shrink: 0;
 
@@ -286,21 +303,23 @@ textarea {
 }
 
 .nav-counter {
-    min-width: 24px;
-    height: 21px;
+    min-width: 25px;
+    height: 22px;
 
     display: grid;
     place-items: center;
 
     margin-left: auto;
-    padding: 0 6px;
+    padding: 0 7px;
 
     border-radius: 999px;
 
-    background: rgba(255, 255, 255, 0.12);
-    color: white;
+    background:
+        rgba(255, 255, 255, 0.13);
 
-    font-size: 9px;
+    color: #ffffff;
+
+    font-size: 10px;
     font-weight: 800;
 }
 
@@ -321,8 +340,8 @@ textarea {
 }
 
 .profile-avatar {
-    width: 37px;
-    height: 37px;
+    width: 39px;
+    height: 39px;
 
     display: grid;
     place-items: center;
@@ -332,7 +351,7 @@ textarea {
     border-radius: 50%;
 
     background: var(--red);
-    color: white;
+    color: #ffffff;
 
     font-size: 12px;
     font-weight: 800;
@@ -350,9 +369,9 @@ textarea {
 .profile strong {
     overflow: hidden;
 
-    color: white;
+    color: #ffffff;
 
-    font-size: 11px;
+    font-size: 12px;
 
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -365,7 +384,7 @@ textarea {
 
     color: #7f8dab;
 
-    font-size: 9px;
+    font-size: 10px;
 
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -373,7 +392,7 @@ textarea {
 
 
 /* =====================================================
-   MAIN / TOPBAR
+   MAIN
 ===================================================== */
 
 .main {
@@ -382,6 +401,11 @@ textarea {
 
     margin-left: var(--sidebar-width);
 }
+
+
+/* =====================================================
+   TOPBAR
+===================================================== */
 
 .topbar {
     position: sticky;
@@ -396,9 +420,11 @@ textarea {
 
     padding: 0 32px;
 
-    border-bottom: 1px solid var(--border);
+    border-bottom:
+        1px solid var(--border);
 
-    background: rgba(255, 255, 255, 0.94);
+    background:
+        rgba(255, 255, 255, 0.95);
 
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -419,28 +445,20 @@ textarea {
 }
 
 .topbar h1 {
-    overflow: hidden;
-
     color: var(--text);
 
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
 
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.2;
 }
 
 .topbar p {
-    overflow: hidden;
-
     margin-top: 4px;
 
     color: var(--text-soft);
 
-    font-size: 10px;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 12px;
 }
 
 .menu-button {
@@ -474,48 +492,46 @@ textarea {
     justify-content: center;
     gap: 7px;
 
-    padding: 0 17px;
+    padding: 0 18px;
 
-    border-radius: 11px;
+    border-radius: 12px;
 
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 700;
 
     white-space: nowrap;
 
     transition:
         background var(--transition),
+        border-color var(--transition),
         box-shadow var(--transition),
         transform var(--transition);
 }
 
 .primary-button {
     background: var(--blue);
-    color: white;
+    color: #ffffff;
 
     box-shadow:
-        0 8px 22px rgba(23, 87, 215, 0.18);
+        0 8px 22px rgba(23, 87, 215, 0.19);
 }
 
 .primary-button:hover {
     background: var(--blue-hover);
 
     transform: translateY(-1px);
-
-    box-shadow:
-        0 10px 26px rgba(23, 87, 215, 0.24);
 }
 
 .secondary-button {
-    border: 1px solid var(--border);
+    border:
+        1px solid var(--border-strong);
 
-    background: white;
+    background: #ffffff;
     color: var(--text);
 }
 
-.primary-button:active,
-.secondary-button:active {
-    transform: scale(0.98);
+.secondary-button:hover {
+    background: #f8faff;
 }
 
 
@@ -525,10 +541,13 @@ textarea {
 
 .content {
     width: 100%;
-    max-width: 1600px;
+    max-width: 1500px;
 
     margin: 0 auto;
-    padding: 30px 32px 40px;
+
+    padding:
+        34px 34px
+        55px;
 }
 
 
@@ -540,46 +559,54 @@ textarea {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 22px;
+    gap: 24px;
 
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
-.report-heading > div:first-child {
+.report-heading > div {
     min-width: 0;
 }
 
 .eyebrow {
     display: block;
 
-    margin-bottom: 7px;
+    margin-bottom: 8px;
 
     color: var(--blue);
 
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 800;
 
-    letter-spacing: 1.4px;
+    letter-spacing: 1.5px;
+
     text-transform: uppercase;
 }
 
 .report-heading h2 {
     color: var(--text);
 
-    font-size: clamp(22px, 2vw, 28px);
+    font-size:
+        clamp(
+            26px,
+            2.4vw,
+            34px
+        );
+
     font-weight: 800;
 
     line-height: 1.15;
+    letter-spacing: -0.6px;
 }
 
 .report-heading p {
-    max-width: 650px;
+    max-width: 720px;
 
-    margin-top: 8px;
+    margin-top: 9px;
 
     color: var(--text-soft);
 
-    font-size: 11px;
+    font-size: 14px;
 
     line-height: 1.6;
 }
@@ -590,7 +617,7 @@ textarea {
 ===================================================== */
 
 .period-control {
-    min-width: 180px;
+    min-width: 210px;
 
     flex-shrink: 0;
 }
@@ -598,29 +625,31 @@ textarea {
 .period-control label {
     display: block;
 
-    margin-bottom: 6px;
+    margin-bottom: 7px;
 
     color: var(--text-soft);
 
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 700;
 }
 
 .period-control select {
     width: 100%;
-    height: 44px;
+    height: 48px;
 
-    padding: 0 12px;
+    padding: 0 14px;
 
-    border: 1px solid var(--border);
-    border-radius: 11px;
+    border:
+        1px solid var(--border-strong);
+
+    border-radius: 12px;
 
     outline: none;
 
-    background: white;
+    background: #ffffff;
     color: var(--text);
 
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 600;
 
     transition:
@@ -632,7 +661,8 @@ textarea {
     border-color: var(--blue);
 
     box-shadow:
-        0 0 0 3px rgba(23, 87, 215, 0.08);
+        0 0 0 4px
+        rgba(23, 87, 215, 0.08);
 }
 
 
@@ -644,29 +674,34 @@ textarea {
     display: grid;
 
     grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
 
-    gap: 16px;
+    gap: 18px;
 
-    margin-bottom: 18px;
+    margin-bottom: 22px;
 }
 
 .stat-card {
     min-width: 0;
-    min-height: 122px;
+    min-height: 145px;
 
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 18px;
 
-    padding: 20px;
+    padding: 23px 24px;
 
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border:
+        1px solid var(--border);
 
-    background: white;
+    border-radius: 20px;
 
-    box-shadow: var(--shadow-card);
+    background: #ffffff;
+
+    box-shadow: var(--shadow);
 
     transition:
         transform var(--transition),
@@ -674,24 +709,25 @@ textarea {
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
+    transform:
+        translateY(-2px);
 
     box-shadow:
-        0 15px 35px rgba(20, 38, 78, 0.09);
+        var(--shadow-hover);
 }
 
 .stat-icon {
-    width: 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
 
     display: grid;
     place-items: center;
 
-    flex-shrink: 0;
+    flex: 0 0 60px;
 
-    border-radius: 14px;
+    border-radius: 18px;
 
-    font-size: 15px;
+    font-size: 23px;
     font-weight: 800;
 }
 
@@ -717,7 +753,6 @@ textarea {
 
 .stat-data {
     min-width: 0;
-
     flex: 1;
 }
 
@@ -728,44 +763,35 @@ textarea {
 }
 
 .stat-data span {
-    overflow: hidden;
-
     margin-bottom: 5px;
 
     color: var(--text-soft);
 
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 600;
 
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.35;
 }
 
 .stat-data strong {
-    overflow: hidden;
+    overflow-wrap: anywhere;
 
     color: var(--text);
 
-    font-size: 22px;
+    font-size: 31px;
     font-weight: 800;
 
-    line-height: 1.1;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.05;
 }
 
 .stat-data small {
-    overflow: hidden;
+    margin-top: 7px;
 
-    margin-top: 5px;
+    color: #9aa3b2;
 
-    color: #9aa2b0;
+    font-size: 11px;
 
-    font-size: 8px;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.4;
 }
 
 
@@ -777,18 +803,19 @@ textarea {
     display: grid;
 
     grid-template-columns:
-        repeat(2, minmax(0, 1fr));
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
 
-    gap: 18px;
+    gap: 22px;
 
-    margin-bottom: 18px;
-
-    align-items: stretch;
+    margin-bottom: 22px;
 }
 
 
 /* =====================================================
-   PANELS
+   PANEL
 ===================================================== */
 
 .panel {
@@ -796,25 +823,29 @@ textarea {
 
     overflow: hidden;
 
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border:
+        1px solid var(--border);
 
-    background: white;
+    border-radius: 20px;
+
+    background: #ffffff;
 
     box-shadow: var(--shadow);
 }
 
 .panel-header {
-    min-height: 76px;
+    min-height: 94px;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 15px;
+    gap: 18px;
 
-    padding: 18px 22px 16px;
+    padding:
+        20px 26px;
 
-    border-bottom: 1px solid #f0f2f6;
+    border-bottom:
+        1px solid #edf0f5;
 }
 
 .panel-header > div {
@@ -822,24 +853,28 @@ textarea {
 }
 
 .panel-header .eyebrow {
-    margin-bottom: 5px;
+    margin-bottom: 7px;
+
+    font-size: 11px;
 }
 
 .panel-header h3 {
     color: var(--text);
 
-    font-size: 14px;
+    font-size: 19px;
     font-weight: 800;
+
+    line-height: 1.2;
 }
 
 .panel-header p {
-    margin-top: 5px;
+    margin-top: 7px;
 
     color: var(--text-soft);
 
-    font-size: 9px;
+    font-size: 12px;
 
-    line-height: 1.5;
+    line-height: 1.45;
 }
 
 .panel-total {
@@ -847,7 +882,7 @@ textarea {
 
     color: var(--blue);
 
-    font-size: 16px;
+    font-size: 22px;
     font-weight: 800;
 
     white-space: nowrap;
@@ -859,64 +894,71 @@ textarea {
 ===================================================== */
 
 .chart-panel {
-    min-height: 330px;
+    min-height: 500px;
 }
 
 .chart-container {
-    min-height: 250px;
+    min-height: 405px;
 
-    display: flex;
-    align-items: flex-end;
+    overflow-x: auto;
 
-    padding: 20px 22px 24px;
+    padding:
+        30px 28px
+        24px;
+
+    -webkit-overflow-scrolling: touch;
 }
 
 .bar-chart {
-    width: 100%;
-    min-height: 205px;
+    min-width: 100%;
+    min-height: 340px;
 
     display: flex;
     align-items: flex-end;
-    justify-content: stretch;
-    gap: 10px;
+    justify-content: space-around;
+    gap: 18px;
 }
 
 .bar-item,
 .chart-item {
-    min-width: 0;
-    height: 205px;
+    min-width: 62px;
+    height: 340px;
 
     display: flex;
-    flex: 1;
     flex-direction: column;
-    justify-content: flex-end;
     align-items: center;
-    gap: 7px;
+    justify-content: flex-end;
+
+    flex: 1;
 }
 
 .bar-value,
 .chart-value {
+    margin-bottom: 9px;
+
     color: var(--text);
 
-    font-size: 7px;
+    font-size: 12px;
     font-weight: 700;
 
-    white-space: nowrap;
+    text-align: center;
 }
 
 .bar-track,
 .chart-track {
     position: relative;
 
-    width: min(38px, 70%);
-    height: 155px;
+    width: 72%;
+    min-width: 32px;
+    height: 245px;
 
     display: flex;
     align-items: flex-end;
 
     overflow: hidden;
 
-    border-radius: 9px 9px 4px 4px;
+    border-radius:
+        10px 10px 6px 6px;
 
     background: #f0f3f8;
 }
@@ -924,19 +966,18 @@ textarea {
 .bar-fill,
 .chart-bar {
     width: 100%;
-    min-height: 4px;
+    min-height: 5px;
 
-    border-radius: 9px 9px 4px 4px;
+    border-radius:
+        10px 10px
+        4px 4px;
 
     background:
         linear-gradient(
             180deg,
-            #3f79ef 0%,
+            #3676ed 0%,
             var(--blue) 100%
         );
-
-    box-shadow:
-        0 6px 14px rgba(23, 87, 215, 0.15);
 
     transition:
         height 0.35s ease;
@@ -944,17 +985,15 @@ textarea {
 
 .bar-label,
 .chart-label {
-    max-width: 72px;
-
-    overflow: hidden;
+    margin-top: 10px;
 
     color: var(--text-soft);
 
-    font-size: 7px;
+    font-size: 11px;
     font-weight: 600;
 
     text-align: center;
-    text-overflow: ellipsis;
+
     white-space: nowrap;
 }
 
@@ -964,7 +1003,9 @@ textarea {
 ===================================================== */
 
 .status-report {
-    padding: 4px 22px 20px;
+    padding:
+        10px 26px
+        24px;
 }
 
 .status-report-item,
@@ -972,16 +1013,19 @@ textarea {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr) auto;
+        minmax(0, 1fr)
+        auto;
 
     align-items: center;
     gap: 12px;
 
-    min-height: 53px;
+    min-height: 72px;
 
-    padding: 10px 0;
+    padding:
+        15px 0;
 
-    border-bottom: 1px solid #f0f2f6;
+    border-bottom:
+        1px solid #edf0f5;
 }
 
 .status-report-item:last-child,
@@ -994,14 +1038,14 @@ textarea {
 
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .status-dot {
-    width: 9px;
-    height: 9px;
+    width: 11px;
+    height: 11px;
 
-    flex-shrink: 0;
+    flex: 0 0 11px;
 
     border-radius: 50%;
 
@@ -1013,8 +1057,8 @@ textarea {
 
     color: var(--text);
 
-    font-size: 9px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
 
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1024,16 +1068,17 @@ textarea {
 .status-value {
     color: var(--text);
 
-    font-size: 10px;
+    font-size: 16px;
     font-weight: 800;
 
     white-space: nowrap;
 }
 
 .status-bar {
-    grid-column: 1 / -1;
+    grid-column:
+        1 / -1;
 
-    height: 5px;
+    height: 7px;
 
     overflow: hidden;
 
@@ -1047,7 +1092,12 @@ textarea {
 
     border-radius: inherit;
 
-    background: var(--blue);
+    background:
+        linear-gradient(
+            90deg,
+            var(--blue),
+            #4f83ed
+        );
 }
 
 
@@ -1056,17 +1106,23 @@ textarea {
 ===================================================== */
 
 .ranking-list {
-    padding: 0 22px 20px;
+    padding:
+        6px 26px
+        22px;
 }
 
 .ranking-item {
+    min-height: 78px;
+
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
 
-    padding: 13px 0;
+    padding:
+        15px 0;
 
-    border-top: 1px solid #f0f2f6;
+    border-top:
+        1px solid #edf0f5;
 }
 
 .ranking-item:first-child {
@@ -1074,20 +1130,20 @@ textarea {
 }
 
 .rank-number {
-    width: 30px;
-    height: 30px;
+    width: 43px;
+    height: 43px;
 
     display: grid;
     place-items: center;
 
     flex-shrink: 0;
 
-    border-radius: 9px;
+    border-radius: 13px;
 
     background: var(--blue-soft);
     color: var(--blue);
 
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 800;
 }
 
@@ -1107,19 +1163,23 @@ textarea {
 
     color: var(--text);
 
-    font-size: 9px;
+    font-size: 14px;
     font-weight: 800;
+
+    line-height: 1.3;
 
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .ranking-info span {
-    margin-top: 4px;
+    margin-top: 5px;
 
     color: var(--text-soft);
 
-    font-size: 8px;
+    font-size: 11px;
+
+    line-height: 1.35;
 }
 
 .ranking-value {
@@ -1127,7 +1187,7 @@ textarea {
 
     color: var(--text);
 
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 800;
 
     white-space: nowrap;
@@ -1136,11 +1196,13 @@ textarea {
 .panel-empty {
     display: none;
 
-    padding: 35px 22px;
+    padding:
+        45px 24px;
 
     color: var(--text-soft);
 
-    font-size: 9px;
+    font-size: 13px;
+    line-height: 1.5;
 
     text-align: center;
 }
@@ -1158,40 +1220,48 @@ textarea {
     display: grid;
 
     grid-template-columns:
-        repeat(2, minmax(0, 1fr));
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
 
-    gap: 12px;
+    gap: 14px;
 
-    padding: 0 22px 22px;
+    padding:
+        22px 24px
+        24px;
 }
 
 .product-card {
     min-width: 0;
+    min-height: 112px;
 
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
 
-    padding: 17px;
+    padding: 18px;
 
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    border:
+        1px solid var(--border);
+
+    border-radius: 16px;
 
     background: #fbfcfe;
 }
 
 .product-icon {
-    width: 42px;
-    height: 42px;
+    width: 54px;
+    height: 54px;
 
     display: grid;
     place-items: center;
 
-    flex-shrink: 0;
+    flex: 0 0 54px;
 
-    border-radius: 11px;
+    border-radius: 16px;
 
-    font-size: 11px;
+    font-size: 17px;
     font-weight: 800;
 }
 
@@ -1200,9 +1270,19 @@ textarea {
     color: var(--blue);
 }
 
-.product-icon.red {
-    background: var(--red-soft);
-    color: var(--red);
+.product-icon.purple {
+    background: var(--purple-soft);
+    color: var(--purple);
+}
+
+.product-icon.green {
+    background: var(--green-soft);
+    color: var(--green);
+}
+
+.product-icon.orange {
+    background: var(--orange-soft);
+    color: var(--orange);
 }
 
 .product-card > div:last-child {
@@ -1218,29 +1298,29 @@ textarea {
 .product-card span {
     color: var(--text-soft);
 
-    font-size: 8px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .product-card strong {
-    overflow: hidden;
+    overflow-wrap: anywhere;
 
-    margin-top: 4px;
+    margin-top: 5px;
 
     color: var(--text);
 
-    font-size: 18px;
+    font-size: 24px;
     font-weight: 800;
 
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.1;
 }
 
 .product-card small {
-    margin-top: 3px;
+    margin-top: 5px;
 
-    color: #9ba2af;
+    color: #9aa3b2;
 
-    font-size: 7px;
+    font-size: 11px;
 }
 
 
@@ -1249,36 +1329,41 @@ textarea {
 ===================================================== */
 
 .summary-list {
-    padding: 0 22px 20px;
+    padding:
+        6px 26px
+        22px;
 }
 
 .summary-row {
+    min-height: 62px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 15px;
+    gap: 20px;
 
-    min-height: 50px;
+    padding:
+        14px 0;
 
-    padding: 13px 0;
-
-    border-top: 1px solid #f0f2f6;
+    border-bottom:
+        1px solid #edf0f5;
 }
 
-.summary-row:first-child {
-    border-top: 0;
+.summary-row:last-child {
+    border-bottom: 0;
 }
 
 .summary-row span {
     color: var(--text-soft);
 
-    font-size: 9px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .summary-row strong {
     color: var(--text);
 
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 800;
 
     text-align: right;
@@ -1290,23 +1375,23 @@ textarea {
 ===================================================== */
 
 .orders-panel {
-    margin-bottom: 18px;
+    margin-bottom: 22px;
 }
 
 .order-count-label {
-    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
 
-    padding: 7px 10px;
+    padding:
+        8px 11px;
 
     border-radius: 999px;
 
     background: var(--blue-soft);
     color: var(--blue);
 
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 800;
-
-    white-space: nowrap;
 }
 
 
@@ -1324,169 +1409,151 @@ textarea {
 
 table {
     width: 100%;
-    min-width: 850px;
+    min-width: 900px;
 
     border-collapse: collapse;
-
-    background: white;
 }
 
 thead {
-    background: #f8f9fc;
+    background: #f8fafe;
 }
 
 th {
-    padding: 11px 14px;
+    padding:
+        14px 18px;
 
-    color: #9299a7;
+    border-bottom:
+        1px solid var(--border);
 
-    font-size: 8px;
+    color: #778196;
+
+    font-size: 10px;
     font-weight: 800;
 
-    letter-spacing: 0.5px;
-
     text-align: left;
+
+    letter-spacing: 0.45px;
+
     text-transform: uppercase;
 
     white-space: nowrap;
 }
 
 td {
-    padding: 15px 14px;
+    padding:
+        16px 18px;
 
-    border-top: 1px solid #f0f2f6;
+    border-bottom:
+        1px solid #edf0f5;
 
     color: var(--text);
 
-    font-size: 9px;
+    font-size: 12px;
 
     vertical-align: middle;
 }
 
-tbody tr {
-    transition: background var(--transition);
+tbody tr:last-child td {
+    border-bottom: 0;
 }
 
 tbody tr:hover {
-    background: #fafbfe;
+    background: #fafcff;
 }
 
 .order-code {
     color: var(--blue);
 
     font-weight: 800;
-
-    white-space: nowrap;
 }
 
-.cell-main,
-.cell-sub {
-    display: block;
-}
-
-.cell-main {
-    color: var(--text);
-
-    font-weight: 700;
-}
-
-.cell-sub {
-    margin-top: 3px;
-
-    color: #969eac;
-
-    font-size: 8px;
-}
-
-.status-badge {
+.status-badge,
+.payment-badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
 
-    min-height: 27px;
+    min-height: 28px;
 
-    padding: 0 9px;
+    padding:
+        0 10px;
 
     border-radius: 999px;
 
-    background: var(--blue-soft);
-    color: var(--blue);
-
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 800;
 
     white-space: nowrap;
 }
 
-.status-badge.delivered {
+.status-received {
+    background: var(--blue-soft);
+    color: var(--blue);
+}
+
+.status-waiting {
+    background: var(--yellow-soft);
+    color: var(--yellow);
+}
+
+.status-washing {
+    background: var(--purple-soft);
+    color: var(--purple);
+}
+
+.status-drying {
+    background: var(--orange-soft);
+    color: var(--orange);
+}
+
+.status-ready,
+.status-delivered {
     background: var(--green-soft);
     color: var(--green);
 }
 
-.pending-money {
+.money-pending {
     color: var(--red);
 
     font-weight: 800;
-
-    white-space: nowrap;
 }
 
-.paid-money {
+.money-paid {
     color: var(--green);
 
     font-weight: 800;
-
-    white-space: nowrap;
 }
 
 
 /* =====================================================
-   TABLE EMPTY
+   EMPTY STATE
 ===================================================== */
 
-.table-empty {
-    display: none;
-
-    padding: 50px 20px;
+.empty-state {
+    padding:
+        48px 24px;
 
     text-align: center;
 }
 
-.table-empty.visible {
-    display: block;
-}
-
-.empty-icon {
-    width: 56px;
-    height: 56px;
-
-    display: grid;
-    place-items: center;
-
-    margin: 0 auto 14px;
-
-    border-radius: 16px;
-
-    background: var(--blue-soft);
-    color: var(--blue);
-
-    font-size: 18px;
-}
-
-.table-empty h3 {
-    margin-bottom: 6px;
-
+.empty-state h3 {
     color: var(--text);
 
-    font-size: 14px;
+    font-size: 17px;
     font-weight: 800;
 }
 
-.table-empty p {
+.empty-state p {
+    max-width: 520px;
+
+    margin:
+        8px auto 0;
+
     color: var(--text-soft);
 
-    font-size: 10px;
+    font-size: 13px;
 
-    line-height: 1.6;
+    line-height: 1.55;
 }
 
 
@@ -1500,7 +1567,8 @@ tbody tr:hover {
 
     visibility: hidden;
 
-    background: rgba(4, 14, 34, 0.58);
+    background:
+        rgba(4, 14, 34, 0.58);
 
     opacity: 0;
 
@@ -1529,7 +1597,10 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-    outline: 3px solid rgba(23, 87, 215, 0.20);
+    outline:
+        3px solid
+        rgba(23, 87, 215, 0.20);
+
     outline-offset: 2px;
 }
 
@@ -1541,16 +1612,41 @@ textarea:focus-visible {
 @media (max-width: 1180px) {
 
     .content {
-        padding: 28px 24px 36px;
+        padding:
+            30px 24px
+            45px;
     }
 
     .stats-grid {
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
     }
 
-    .report-grid {
-        gap: 15px;
+    .stat-card {
+        min-height: 130px;
+    }
+
+    .chart-panel {
+        min-height: 450px;
+    }
+
+    .chart-container {
+        min-height: 355px;
+    }
+
+    .bar-chart,
+    .bar-item,
+    .chart-item {
+        min-height: 295px;
+        height: 295px;
+    }
+
+    .bar-track,
+    .chart-track {
+        height: 205px;
     }
 }
 
@@ -1563,53 +1659,74 @@ textarea:focus-visible {
 
     .report-grid {
         grid-template-columns: 1fr;
+
+        gap: 18px;
+    }
+
+    .panel-header {
+        min-height: 86px;
     }
 
     .chart-panel {
-        min-height: 320px;
+        min-height: auto;
     }
 
     .chart-container {
-        min-height: 240px;
+        min-height: 330px;
     }
 
     .bar-chart {
-        min-height: 195px;
+        min-width: 620px;
+        min-height: 270px;
     }
 
     .bar-item,
     .chart-item {
-        height: 195px;
+        height: 270px;
     }
 
     .bar-track,
     .chart-track {
-        height: 145px;
+        height: 185px;
     }
 }
 
 
 /* =====================================================
-   TABLET PORTRAIT / MOBILE NAV
+   TABLET / MOBILE NAV
 ===================================================== */
 
 @media (max-width: 820px) {
 
     .sidebar {
-        width: min(290px, 84vw);
+        width:
+            min(
+                290px,
+                84vw
+            );
 
         padding:
-            calc(20px + env(safe-area-inset-top))
+            calc(
+                20px +
+                env(safe-area-inset-top)
+            )
             16px
-            calc(18px + env(safe-area-inset-bottom));
+            calc(
+                18px +
+                env(safe-area-inset-bottom)
+            );
 
         box-shadow:
-            18px 0 55px rgba(4, 14, 34, 0.24);
+            18px 0 55px
+            rgba(4, 14, 34, 0.24);
 
-        transform: translateX(-105%);
+        transform:
+            translateX(-105%);
 
         transition:
-            transform 0.27s cubic-bezier(
+            transform
+            0.27s
+            cubic-bezier(
                 0.4,
                 0,
                 0.2,
@@ -1618,11 +1735,14 @@ textarea:focus-visible {
     }
 
     .sidebar.open {
-        transform: translateX(0);
+        transform:
+            translateX(0);
     }
 
     .brand {
-        padding: 0 8px 24px;
+        padding:
+            0 8px
+            24px;
     }
 
     .navigation {
@@ -1632,7 +1752,8 @@ textarea:focus-visible {
     .nav-item {
         min-height: 52px;
 
-        padding: 0 14px;
+        padding:
+            0 14px;
 
         border-radius: 12px;
 
@@ -1650,22 +1771,15 @@ textarea:focus-visible {
         height: 42px;
     }
 
-    .profile strong {
-        font-size: 12px;
-    }
-
-    .profile span {
-        font-size: 10px;
-    }
-
     .main {
         margin-left: 0;
     }
 
     .topbar {
-        height: 72px;
+        height: 76px;
 
-        padding: 0 18px;
+        padding:
+            0 20px;
     }
 
     .menu-button {
@@ -1673,33 +1787,89 @@ textarea:focus-visible {
     }
 
     .topbar h1 {
-        font-size: 17px;
-    }
-
-    .topbar .primary-button {
-        min-height: 44px;
-
-        padding: 0 15px;
+        font-size: 18px;
     }
 
     .content {
         max-width: none;
 
         padding:
-            24px 18px
-            calc(36px + env(safe-area-inset-bottom));
+            28px 20px
+            calc(
+                45px +
+                env(safe-area-inset-bottom)
+            );
     }
 
     .report-heading {
-        margin-bottom: 20px;
+        align-items: stretch;
+        flex-direction: column;
+
+        gap: 17px;
+
+        margin-bottom: 24px;
+    }
+
+    .period-control {
+        width: 100%;
+        min-width: 0;
     }
 
     .stats-grid {
-        gap: 12px;
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 14px;
     }
 
-    table {
-        min-width: 800px;
+    .stat-card {
+        min-height: 125px;
+
+        padding: 19px;
+    }
+
+    .stat-icon {
+        width: 52px;
+        height: 52px;
+
+        flex-basis: 52px;
+
+        font-size: 20px;
+    }
+
+    .stat-data strong {
+        font-size: 27px;
+    }
+
+    .panel-header {
+        padding:
+            18px 20px;
+    }
+
+    .status-report {
+        padding:
+            8px 20px
+            20px;
+    }
+
+    .ranking-list {
+        padding:
+            5px 20px
+            20px;
+    }
+
+    .summary-list {
+        padding:
+            5px 20px
+            20px;
+    }
+
+    .product-report {
+        padding:
+            20px;
     }
 }
 
@@ -1710,19 +1880,17 @@ textarea:focus-visible {
 
 @media (max-width: 600px) {
 
-    /* TOPBAR */
-
     .topbar {
-        min-height: 70px;
+        min-height: 72px;
         height: auto;
 
-        padding: 11px 14px;
-
-        padding-top:
+        padding:
             max(
-                11px,
+                10px,
                 env(safe-area-inset-top)
-            );
+            )
+            14px
+            10px;
 
         gap: 10px;
     }
@@ -1732,93 +1900,91 @@ textarea:focus-visible {
     }
 
     .topbar h1 {
-        font-size: 16px;
+        font-size: 17px;
     }
 
     .topbar p {
-        max-width: 120px;
-
-        font-size: 8px;
+        display: none;
     }
 
     .topbar .primary-button {
         min-height: 44px;
 
-        padding: 0 11px;
+        padding:
+            0 12px;
 
-        font-size: 8.5px;
+        font-size: 12px;
     }
-
-
-    /* CONTENT */
 
     .content {
         padding:
-            20px 14px
-            calc(30px + env(safe-area-inset-bottom));
+            23px 15px
+            calc(
+                38px +
+                env(safe-area-inset-bottom)
+            );
     }
 
 
-    /* HEADING + PERIOD */
+    /* HEADING */
 
     .report-heading {
         display: grid;
 
-        grid-template-columns: 1fr;
+        grid-template-columns:
+            1fr;
 
         gap: 15px;
 
-        margin-bottom: 18px;
+        margin-bottom: 22px;
     }
 
-    .report-heading h2 {
-        font-size: 21px;
-    }
-
-    .report-heading p {
-        margin-top: 7px;
-
+    .eyebrow {
         font-size: 10px;
     }
 
-    .period-control {
-        width: 100%;
-        min-width: 0;
+    .report-heading h2 {
+        font-size: 25px;
+    }
+
+    .report-heading p {
+        font-size: 13px;
+
+        line-height: 1.55;
     }
 
     .period-control label {
-        font-size: 9px;
+        font-size: 12px;
     }
 
     .period-control select {
-        height: 48px;
+        height: 50px;
 
         font-size: 16px;
     }
 
 
-    /* STATS 2 x 2 */
+    /* STATS */
 
     .stats-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
 
-        gap: 9px;
+        gap: 13px;
 
-        margin-bottom: 14px;
+        margin-bottom: 18px;
     }
 
     .stat-card {
-        min-height: 145px;
+        min-height: 108px;
 
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 11px;
+        flex-direction: row;
+        align-items: center;
 
-        padding: 14px;
+        gap: 17px;
 
-        border-radius: 15px;
+        padding: 18px;
+
+        border-radius: 18px;
     }
 
     .stat-card:hover {
@@ -1826,34 +1992,30 @@ textarea:focus-visible {
     }
 
     .stat-icon {
-        width: 42px;
-        height: 42px;
+        width: 52px;
+        height: 52px;
 
-        border-radius: 12px;
+        flex-basis: 52px;
 
-        font-size: 14px;
-    }
+        border-radius: 16px;
 
-    .stat-data {
-        width: 100%;
-    }
-
-    .stat-data span {
-        font-size: 9px;
-
-        white-space: normal;
-    }
-
-    .stat-data strong {
         font-size: 20px;
     }
 
+    .stat-data span {
+        margin-bottom: 4px;
+
+        font-size: 12px;
+    }
+
+    .stat-data strong {
+        font-size: 27px;
+    }
+
     .stat-data small {
-        font-size: 7.5px;
+        margin-top: 5px;
 
-        white-space: normal;
-
-        line-height: 1.35;
+        font-size: 11px;
     }
 
 
@@ -1862,76 +2024,80 @@ textarea:focus-visible {
     .report-grid {
         grid-template-columns: 1fr;
 
-        gap: 14px;
+        gap: 15px;
 
-        margin-bottom: 14px;
+        margin-bottom: 15px;
     }
 
     .panel {
-        border-radius: 15px;
+        border-radius: 18px;
     }
 
     .panel-header {
-        min-height: 68px;
+        min-height: 80px;
 
         padding:
-            16px 15px
-            14px;
+            17px 18px;
+    }
+
+    .panel-header .eyebrow {
+        margin-bottom: 5px;
+
+        font-size: 10px;
     }
 
     .panel-header h3 {
-        font-size: 14px;
+        font-size: 17px;
     }
 
     .panel-header p {
-        font-size: 9px;
+        margin-top: 5px;
+
+        font-size: 12px;
     }
 
     .panel-total {
-        font-size: 14px;
+        font-size: 18px;
     }
 
 
     /* CHART */
 
-    .chart-panel {
-        min-height: 300px;
-    }
-
     .chart-container {
-        min-height: 225px;
-
-        overflow-x: auto;
+        min-height: 300px;
 
         padding:
-            18px 15px
-            20px;
+            20px 18px;
 
-        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
     }
 
     .bar-chart {
-        min-width: 430px;
-        min-height: 185px;
+        min-width: 470px;
+        min-height: 240px;
 
-        gap: 8px;
+        gap: 12px;
     }
 
     .bar-item,
     .chart-item {
-        height: 185px;
+        min-width: 55px;
+        height: 240px;
     }
 
     .bar-track,
     .chart-track {
-        height: 135px;
+        height: 160px;
+    }
+
+    .bar-value,
+    .chart-value {
+        font-size: 11px;
     }
 
     .bar-label,
-    .chart-label,
-    .bar-value,
-    .chart-value {
-        font-size: 7px;
+    .chart-label {
+        font-size: 11px;
     }
 
 
@@ -1939,64 +2105,77 @@ textarea:focus-visible {
 
     .status-report {
         padding:
-            3px 15px
-            15px;
+            5px 18px
+            18px;
     }
 
     .status-report-item,
     .status-item {
-        min-height: 56px;
+        min-height: 63px;
+
+        padding:
+            13px 0;
     }
 
     .status-name {
-        font-size: 10px;
+        font-size: 14px;
     }
 
     .status-count,
     .status-value {
-        font-size: 11px;
+        font-size: 14px;
+    }
+
+    .status-bar {
+        height: 6px;
     }
 
 
-    /* RANKINGS */
+    /* RANKING */
 
     .ranking-list {
         padding:
-            0 15px
-            15px;
+            5px 18px
+            18px;
     }
 
     .ranking-item {
-        min-height: 58px;
+        min-height: 70px;
 
-        padding: 12px 0;
+        gap: 13px;
+
+        padding:
+            13px 0;
     }
 
     .rank-number {
-        width: 34px;
-        height: 34px;
+        width: 40px;
+        height: 40px;
 
-        border-radius: 10px;
+        flex-basis: 40px;
 
-        font-size: 10px;
+        border-radius: 12px;
+
+        font-size: 12px;
     }
 
     .ranking-info strong {
-        font-size: 10px;
+        font-size: 13px;
     }
 
     .ranking-info span {
-        font-size: 8px;
+        font-size: 11px;
     }
 
     .ranking-value {
-        font-size: 10px;
+        font-size: 13px;
     }
 
     .panel-empty {
-        padding: 32px 15px;
+        padding:
+            35px 18px;
 
-        font-size: 10px;
+        font-size: 12px;
     }
 
 
@@ -2005,40 +2184,41 @@ textarea:focus-visible {
     .product-report {
         grid-template-columns: 1fr;
 
-        gap: 9px;
+        gap: 11px;
 
         padding:
-            0 15px
-            15px;
+            17px;
     }
 
     .product-card {
-        min-height: 74px;
+        min-height: 90px;
 
-        padding: 14px;
+        padding: 15px;
 
-        border-radius: 12px;
+        border-radius: 15px;
     }
 
     .product-icon {
-        width: 46px;
-        height: 46px;
+        width: 50px;
+        height: 50px;
 
-        border-radius: 12px;
+        flex-basis: 50px;
 
-        font-size: 12px;
+        border-radius: 15px;
+
+        font-size: 16px;
     }
 
     .product-card span {
-        font-size: 9px;
+        font-size: 11px;
     }
 
     .product-card strong {
-        font-size: 20px;
+        font-size: 21px;
     }
 
     .product-card small {
-        font-size: 8px;
+        font-size: 10px;
     }
 
 
@@ -2046,79 +2226,64 @@ textarea:focus-visible {
 
     .summary-list {
         padding:
-            0 15px
-            15px;
+            5px 18px
+            18px;
     }
 
     .summary-row {
-        min-height: 55px;
+        min-height: 58px;
+
+        padding:
+            13px 0;
     }
 
     .summary-row span {
-        font-size: 9px;
+        font-size: 12px;
     }
 
     .summary-row strong {
-        font-size: 11px;
+        font-size: 13px;
     }
 
 
     /* TABLE */
 
     .orders-panel {
-        margin-bottom: 14px;
+        margin-bottom: 15px;
     }
 
     .order-count-label {
-        padding: 7px 9px;
-
-        font-size: 8px;
+        font-size: 10px;
     }
 
     .table-wrapper {
         overflow-x: auto;
 
         scrollbar-width: thin;
-
-        scroll-snap-type: x proximity;
     }
 
     table {
-        min-width: 760px;
+        min-width: 780px;
     }
 
     th {
-        padding: 10px 12px;
+        padding:
+            12px 14px;
 
-        font-size: 7px;
+        font-size: 9px;
     }
 
     td {
-        padding: 13px 12px;
+        padding:
+            14px;
 
-        font-size: 8.5px;
-    }
-
-    .cell-sub {
-        font-size: 7.5px;
-    }
-
-    .status-badge {
-        min-height: 29px;
-
-        padding: 0 9px;
-
-        font-size: 7.5px;
-    }
-
-    .table-empty {
-        padding: 44px 18px;
+        font-size: 12px;
     }
 }
 
 
 /* =====================================================
-   VERY SMALL PHONES
+   VERY SMALL PHONE
 ===================================================== */
 
 @media (max-width: 390px) {
@@ -2128,14 +2293,11 @@ textarea:focus-visible {
         padding-left: 12px;
     }
 
-    .topbar p {
-        max-width: 95px;
-    }
-
     .topbar .primary-button {
-        padding: 0 9px;
+        padding:
+            0 10px;
 
-        font-size: 8px;
+        font-size: 11px;
     }
 
     .content {
@@ -2143,39 +2305,39 @@ textarea:focus-visible {
         padding-left: 12px;
     }
 
-    .stats-grid {
-        gap: 8px;
+    .report-heading h2 {
+        font-size: 23px;
     }
 
     .stat-card {
-        min-height: 140px;
+        padding: 16px;
+    }
 
-        padding: 13px;
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+
+        flex-basis: 48px;
     }
 
     .stat-data strong {
-        font-size: 18px;
+        font-size: 25px;
     }
 
     .panel-header {
-        padding-right: 13px;
-        padding-left: 13px;
+        padding:
+            16px;
     }
 
     .status-report,
     .ranking-list,
     .summary-list {
-        padding-right: 13px;
-        padding-left: 13px;
+        padding-right: 16px;
+        padding-left: 16px;
     }
 
     .product-report {
-        padding-right: 13px;
-        padding-left: 13px;
-    }
-
-    .ranking-value {
-        font-size: 9px;
+        padding: 15px;
     }
 }
 
@@ -2187,128 +2349,169 @@ textarea:focus-visible {
 @media (min-width: 1450px) {
 
     .content {
+        max-width: 1560px;
+
         padding:
-            34px 40px
-            44px;
+            38px 42px
+            60px;
     }
 
-    .stats-grid,
-    .report-grid {
+    .stats-grid {
         gap: 20px;
     }
 
     .stat-card {
-        min-height: 128px;
+        min-height: 155px;
+    }
+
+    .report-grid {
+        gap: 24px;
+    }
+
+    .panel-header {
+        min-height: 98px;
+    }
+
+    .chart-panel {
+        min-height: 525px;
+    }
+
+    .chart-container {
+        min-height: 430px;
     }
 }
 
 
 /* =====================================================
    PRINT
-   Para el botón "Imprimir reporte"
 ===================================================== */
 
 @media print {
 
-    @page {
-        size: auto;
-        margin: 12mm;
-    }
-
     body {
-        background: white !important;
-        color: #111827 !important;
+        background: #ffffff;
     }
 
     .sidebar,
     .topbar,
+    .period-control,
     .overlay,
-    .menu-button,
     #printReportButton {
         display: none !important;
     }
 
     .main {
-        margin-left: 0 !important;
+        margin-left: 0;
     }
 
     .content {
-        width: 100% !important;
-        max-width: none !important;
+        max-width: none;
 
-        padding: 0 !important;
+        padding: 0;
     }
 
     .report-heading {
-        margin-bottom: 16px;
-    }
-
-    .period-control {
-        display: none !important;
+        margin-bottom: 18px;
     }
 
     .stats-grid {
         grid-template-columns:
-            repeat(4, 1fr) !important;
+            repeat(
+                4,
+                minmax(0, 1fr)
+            );
 
-        gap: 8px !important;
+        gap: 10px;
+    }
+
+    .stat-card {
+        min-height: auto;
+
+        padding: 12px;
+
+        box-shadow: none;
+
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .stat-icon {
+        width: 38px;
+        height: 38px;
+
+        flex-basis: 38px;
+
+        font-size: 14px;
+    }
+
+    .stat-data span {
+        font-size: 9px;
+    }
+
+    .stat-data strong {
+        font-size: 18px;
+    }
+
+    .stat-data small {
+        font-size: 8px;
     }
 
     .report-grid {
         grid-template-columns:
-            repeat(2, 1fr) !important;
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
-        gap: 10px !important;
-    }
+        gap: 12px;
 
-    .stat-card,
-    .panel {
         break-inside: avoid;
-
-        box-shadow: none !important;
     }
 
-    .stat-card {
-        min-height: auto !important;
+    .panel {
+        box-shadow: none;
 
-        padding: 12px !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
 
-    .chart-panel {
-        min-height: 280px;
+    .panel-header {
+        min-height: auto;
+
+        padding: 12px;
     }
 
     .chart-container {
-        min-height: 210px;
+        min-height: 260px;
 
-        overflow: visible !important;
+        padding: 12px;
+
+        overflow: visible;
     }
 
     .bar-chart {
-        min-width: 0 !important;
+        min-width: 0;
+        min-height: 220px;
     }
 
-    .orders-panel {
-        break-before: auto;
+    .bar-item,
+    .chart-item {
+        height: 220px;
+    }
+
+    .bar-track,
+    .chart-track {
+        height: 145px;
     }
 
     .table-wrapper {
-        overflow: visible !important;
+        overflow: visible;
     }
 
     table {
-        min-width: 0 !important;
+        min-width: 0;
 
-        font-size: 8px;
-    }
-
-    th,
-    td {
-        padding: 7px 6px !important;
-    }
-
-    a {
-        text-decoration: none !important;
+        font-size: 9px;
     }
 
     * {
@@ -2327,336 +2530,16 @@ textarea:focus-visible {
     *,
     *::before,
     *::after {
-        scroll-behavior: auto !important;
+        scroll-behavior:
+            auto !important;
 
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-    }
-}
+        transition-duration:
+            0.01ms !important;
 
-/* =====================================================
-   REPORTES — MOBILE UI FINAL
-===================================================== */
+        animation-duration:
+            0.01ms !important;
 
-@media (max-width: 820px) {
-    .content {
-        padding: 26px 20px 42px;
-    }
-
-    .report-heading {
-        gap: 18px;
-        margin-bottom: 22px;
-    }
-
-    .report-heading h2 {
-        font-size: 25px;
-        line-height: 1.2;
-    }
-
-    .report-heading p {
-        font-size: 13px;
-        line-height: 1.55;
-    }
-
-    .period-control {
-        gap: 9px;
-    }
-
-    .period-control select {
-        min-height: 48px;
-        border-radius: 13px;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-        margin-bottom: 20px;
-    }
-
-    .stat-card {
-        min-height: 124px;
-        padding: 19px;
-        gap: 15px;
-        border-radius: 20px;
-        border: 1px solid #e8edf5;
-        box-shadow: 0 8px 24px rgba(20, 38, 78, 0.055);
-    }
-
-    .report-grid {
-        grid-template-columns: 1fr;
-        gap: 18px;
-    }
-
-    .panel {
-        border-radius: 20px;
-        overflow: hidden;
-    }
-
-    .panel-header {
-        min-height: 64px;
-        padding: 17px 19px;
-    }
-
-    .ranking-item,
-    .status-report-item,
-    .status-item {
-        min-height: 60px;
-        padding: 12px 14px;
-    }
-
-    .product-report {
-        gap: 12px;
-    }
-
-    .product-card {
-        min-height: 100px;
-        padding: 16px;
-        border-radius: 16px;
-    }
-
-    .chart-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .bar-chart {
-        min-width: 470px;
-    }
-
-    .table-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-}
-
-@media (max-width: 600px) {
-    .topbar {
-        min-height: 74px;
-        height: auto;
-        padding:
-            max(10px, env(safe-area-inset-top))
-            14px
-            10px;
-    }
-
-    .topbar h1 {
-        font-size: 16px;
-    }
-
-    .topbar p {
-        display: none;
-    }
-
-    .content {
-        padding:
-            22px 16px
-            calc(38px + env(safe-area-inset-bottom));
-    }
-
-    .report-heading {
-        align-items: stretch;
-        flex-direction: column;
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    .report-heading h2 {
-        font-size: 23px;
-    }
-
-    .report-heading p {
-        margin-top: 7px;
-        font-size: 13px;
-    }
-
-    .eyebrow {
-        margin-bottom: 6px;
-        font-size: 10px;
-        letter-spacing: 1px;
-    }
-
-    .period-control {
-        width: 100%;
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .period-control label {
-        font-size: 12px;
-    }
-
-    .period-control select {
-        width: 100%;
-        min-height: 50px;
-        font-size: 16px;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 13px;
-        margin-bottom: 20px;
-    }
-
-    .stat-card {
-        min-height: 106px;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 17px;
-        padding: 18px;
-        border-radius: 19px;
-    }
-
-    .stat-icon {
-        width: 52px;
-        height: 52px;
-        flex: 0 0 52px;
-        border-radius: 16px;
-    }
-
-    .stat-card > div:not(.stat-icon) {
-        min-width: 0;
-        flex: 1;
-    }
-
-    .stat-card p,
-    .stat-label {
-        margin-bottom: 5px;
-        font-size: 12px;
-    }
-
-    .stat-card strong,
-    .stat-value {
-        font-size: 26px;
-        line-height: 1.1;
-    }
-
-    .report-grid {
-        gap: 15px;
-    }
-
-    .panel {
-        border-radius: 18px;
-    }
-
-    .panel-header {
-        min-height: 62px;
-        padding: 16px;
-    }
-
-    .panel-header h3 {
-        font-size: 15px;
-        line-height: 1.3;
-    }
-
-    .panel-total {
-        font-size: 12px;
-    }
-
-    .chart-container {
-        padding: 16px 12px;
-    }
-
-    .bar-chart {
-        min-width: 440px;
-        gap: 8px;
-    }
-
-    .bar-value {
-        display: block;
-        font-size: 10px;
-    }
-
-    .ranking-list,
-    .status-report {
-        padding: 8px 16px 16px;
-    }
-
-    .ranking-item,
-    .status-report-item,
-    .status-item {
-        min-height: 62px;
-        gap: 12px;
-        padding: 13px 0;
-    }
-
-    .rank-number {
-        width: 34px;
-        height: 34px;
-        flex: 0 0 34px;
-    }
-
-    .ranking-info strong,
-    .status-name {
-        font-size: 13px;
-    }
-
-    .ranking-info span,
-    .status-count,
-    .status-value {
-        font-size: 11px;
-    }
-
-    .product-report {
-        grid-template-columns: 1fr;
-        gap: 11px;
-        padding: 16px;
-    }
-
-    .product-card {
-        min-height: 88px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 15px;
-    }
-
-    .product-icon {
-        width: 48px;
-        height: 48px;
-        flex: 0 0 48px;
-    }
-
-    .summary-list {
-        padding: 8px 16px 16px;
-    }
-
-    .summary-row {
-        min-height: 52px;
-        padding: 12px 0;
-        font-size: 12px;
-    }
-
-    table {
-        min-width: 760px;
-    }
-
-    th {
-        padding: 12px 14px;
-        font-size: 10px;
-    }
-
-    td {
-        padding: 14px;
-        font-size: 12px;
-    }
-}
-
-@media print {
-    .stats-grid {
-        grid-template-columns: repeat(4, 1fr) !important;
-    }
-
-    .report-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    }
-
-    .stat-card {
-        min-height: initial !important;
-    }
-
-    .bar-chart {
-        min-width: 0 !important;
+        animation-iteration-count:
+            1 !important;
     }
 }
