@@ -2872,9 +2872,9 @@ async function initialize() {
         );
 
         showToast(
-            "No se pudo conectar con Firebase.",
-            true
-        );
+    `Firebase: ${error?.code || "sin código"} - ${error?.message || "Error desconocido"}`,
+    true
+);
     }
 }
 
