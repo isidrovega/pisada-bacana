@@ -3,14 +3,10 @@
 /* =====================================================
    PISADA BACANA
    NOTA DE SERVICIO
-   PDF + COMPARTIR POR WHATSAPP
+   PDF + COMPARTIR
 ===================================================== */
 
 (() => {
-
-    /* =================================================
-       ESTADO
-    ================================================= */
 
     let currentNoteOrder = null;
     let currentNoteSettings = null;
@@ -38,11 +34,24 @@
 
     function escapeHTML(value) {
         return String(value ?? "")
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#039;");
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+
+    function formatMoneyNumber(value) {
+        return new Intl.NumberFormat(
+            "es-MX",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        ).format(
+            Number(value) || 0
+        );
     }
 
 
@@ -50,22 +59,7 @@
         value,
         currency = "MXN"
     ) {
-        try {
-            return new Intl.NumberFormat(
-                "es-MX",
-                {
-                    style: "currency",
-                    currency,
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }
-            ).format(
-                Number(value) || 0
-            );
-
-        } catch {
-            return `$${Number(value || 0).toFixed(2)}`;
-        }
+        return `${currency}${formatMoneyNumber(value)}`;
     }
 
 
@@ -94,11 +88,9 @@
                 month - 1,
                 day
             );
-
         } else {
             date = new Date(value);
         }
-
 
         if (
             Number.isNaN(
@@ -107,7 +99,6 @@
         ) {
             return "Sin fecha";
         }
-
 
         return new Intl.DateTimeFormat(
             "es-MX",
@@ -123,7 +114,9 @@
 
 
     function sanitizeFileName(value) {
-        return String(value || "nota")
+        return String(
+            value || "nota"
+        )
             .trim()
             .replace(
                 /[^a-zA-Z0-9-_]/g,
@@ -133,6 +126,26 @@
                 /-+/g,
                 "-"
             );
+    }
+
+
+    function firstValue(
+        object,
+        keys,
+        fallback = ""
+    ) {
+        for (const key of keys) {
+            if (
+                object &&
+                object[key] !== undefined &&
+                object[key] !== null &&
+                String(object[key]).trim() !== ""
+            ) {
+                return object[key];
+            }
+        }
+
+        return fallback;
     }
 
 
@@ -149,10 +162,8 @@
             return null;
         }
 
-
         const database =
             getDatabase();
-
 
         try {
             const directOrder =
@@ -163,18 +174,15 @@
             if (directOrder) {
                 return directOrder;
             }
-
         } catch (error) {
             console.warn(
-                "No se encontró directamente por ID:",
+                "No se encontró el pedido directamente:",
                 error
             );
         }
 
-
         const orders =
             await database.getOrders();
-
 
         return (
             orders.find(
@@ -227,7 +235,6 @@
             );
         }
 
-
         return [{
             itemType:
                 order.itemType ||
@@ -259,6 +266,17 @@
 
     function getOrderTotal(order) {
         if (
+            Number.isFinite(
+                Number(order.total)
+            )
+        ) {
+            return Math.max(
+                Number(order.total),
+                0
+            );
+        }
+
+        if (
             Array.isArray(order.items) &&
             order.items.length
         ) {
@@ -275,12 +293,9 @@
             );
         }
 
-
         return Math.max(
             Number(
-                order.total ??
-                order.price ??
-                0
+                order.price || 0
             ),
             0
         );
@@ -304,12 +319,11 @@
             );
         }
 
-
         return Math.max(
             Number(
                 order.paid ??
-                    order.advance ??
-                    0
+                order.advance ??
+                0
             ),
             0
         );
@@ -317,28 +331,8 @@
 
 
     /* =================================================
-       DATOS DEL NEGOCIO
+       NEGOCIO
     ================================================= */
-
-    function firstValue(
-        object,
-        keys,
-        fallback = ""
-    ) {
-        for (const key of keys) {
-            if (
-                object &&
-                object[key] !== undefined &&
-                object[key] !== null &&
-                String(object[key]).trim() !== ""
-            ) {
-                return object[key];
-            }
-        }
-
-        return fallback;
-    }
-
 
     function getBusinessData(
         settings = {}
@@ -349,7 +343,6 @@
             settings.negocio ||
             settings.businessInfo ||
             settings;
-
 
         return {
             name:
@@ -362,7 +355,7 @@
                         "nombre",
                         "nombreNegocio"
                     ],
-                    "Pisada Bacana"
+                    "Pisada Bacana Sneaker Cleaning"
                 ),
 
             address:
@@ -371,7 +364,8 @@
                     [
                         "address",
                         "street",
-                        "direccion"
+                        "direccion",
+                        "businessAddress"
                     ],
                     ""
                 ),
@@ -434,6 +428,7 @@
                     business,
                     [
                         "instagram",
+                        "businessInstagram",
                         "social",
                         "redSocial"
                     ],
@@ -445,9 +440,10 @@
                     business,
                     [
                         "message",
-                        "mensaje"
+                        "mensaje",
+                        "businessMessage"
                     ],
-                    "Gracias por confiar en Pisada Bacana."
+                    "Gracias por su confianza."
                 ),
 
             logo:
@@ -459,7 +455,7 @@
                         "logoData",
                         "businessLogo"
                     ],
-                    ""
+                    "img/logo-pisada-bacana.png"
                 )
         };
     }
@@ -477,7 +473,6 @@
                 .filter(Boolean);
         }
 
-
         if (
             Array.isArray(
                 settings.business?.terms
@@ -489,9 +484,8 @@
                 .filter(Boolean);
         }
 
-
         return [
-            "Recepción: Todo calzado o gorra se recibe bajo revisión previa. Los detalles de desgaste, manchas fijas o daños previos se consideran parte de la condición de recepción.",
+            "Recepción: Todo calzado o gorra se recibe bajo revisión previa. Los detalles de desgaste, manchas fijas o daños previos se anotan en este comprobante.",
             "Calzado o prendas olvidadas: Pasados 30 días a partir de la fecha estimada de entrega, no nos hacemos responsables por el deterioro, pérdida o resguardo de las prendas.",
             "Resultados: Hacemos nuestro mejor esfuerzo por eliminar manchas y suciedad, pero el resultado final depende del material, antigüedad y condición previa del artículo.",
             "Garantía: Tienes 48 horas a partir de la entrega para señalar cualquier disconformidad con el servicio realizado."
@@ -503,7 +497,8 @@
         const parts = [
             item.brand,
             item.model,
-            item.color
+            item.color,
+            item.itemType
         ]
             .map(
                 value =>
@@ -511,17 +506,6 @@
                         .trim()
             )
             .filter(Boolean);
-
-
-        if (
-            parts.length === 0 &&
-            item.itemType
-        ) {
-            parts.push(
-                item.itemType
-            );
-        }
-
 
         return parts.join(" ");
     }
@@ -537,17 +521,14 @@
                 "serviceNoteModal"
             );
 
-
         if (modal) {
             return modal;
         }
-
 
         modal =
             document.createElement(
                 "div"
             );
-
 
         modal.id =
             "serviceNoteModal";
@@ -555,22 +536,18 @@
         modal.className =
             "note-modal";
 
-
         modal.innerHTML = `
             <div class="note-toolbar">
 
                 <div class="note-toolbar-title">
-
                     <span>
-                        COMPROBANTE DE SERVICIO
+                        NOTA DE SERVICIO
                     </span>
 
                     <strong id="noteToolbarCode">
                         Nota
                     </strong>
-
                 </div>
-
 
                 <div class="note-toolbar-actions">
 
@@ -581,7 +558,6 @@
                     >
                         Enviar PDF por WhatsApp
                     </button>
-
 
                     <button
                         type="button"
@@ -596,7 +572,6 @@
 
             </div>
 
-
             <div class="note-preview-area">
 
                 <article
@@ -607,11 +582,9 @@
             </div>
         `;
 
-
         document.body.appendChild(
             modal
         );
-
 
         document
             .getElementById(
@@ -622,7 +595,6 @@
                 closeServiceNote
             );
 
-
         document
             .getElementById(
                 "shareServiceNoteButton"
@@ -632,13 +604,12 @@
                 shareServiceNotePDF
             );
 
-
         return modal;
     }
 
 
     /* =================================================
-       RENDER NOTA
+       RENDER
     ================================================= */
 
     function renderServiceNote(
@@ -650,11 +621,9 @@
                 "serviceNote"
             );
 
-
         if (!note) {
             return;
         }
-
 
         const business =
             getBusinessData(
@@ -668,6 +637,7 @@
 
         const currency =
             settings.orders?.currency ||
+            settings.currency ||
             "MXN";
 
         const items =
@@ -692,27 +662,28 @@
                 0
             );
 
+        const logoHTML = `
+            <img
+                src="${escapeHTML(
+                    business.logo
+                )}"
+                alt="${escapeHTML(
+                    business.name
+                )}"
+                crossorigin="anonymous"
+                onerror="
+                    this.style.display='none';
+                    this.nextElementSibling.style.display='flex';
+                "
+            >
 
-        const logoHTML =
-            business.logo
-                ? `
-                    <img
-                        src="${escapeHTML(
-                            business.logo
-                        )}"
-                        alt="${escapeHTML(
-                            business.name
-                        )}"
-                    >
-                `
-                : `
-                    <div
-                        class="note-company-logo-fallback"
-                    >
-                        PB
-                    </div>
-                `;
-
+            <div
+                class="note-company-logo-fallback"
+                style="display:none;"
+            >
+                PB
+            </div>
+        `;
 
         const itemsHTML =
             items
@@ -723,7 +694,6 @@
                             buildItemDescription(
                                 item
                             );
-
 
                         return `
                             <tr>
@@ -758,16 +728,14 @@
                                 </td>
 
                                 <td>
-                                    ${formatMoney(
-                                        item.price,
-                                        currency
+                                    ${formatMoneyNumber(
+                                        item.price
                                     )}
                                 </td>
 
                                 <td>
-                                    ${formatMoney(
-                                        item.price,
-                                        currency
+                                    ${formatMoneyNumber(
+                                        item.price
                                     )}
                                 </td>
 
@@ -776,7 +744,6 @@
                     }
                 )
                 .join("");
-
 
         const termsHTML =
             terms
@@ -789,11 +756,16 @@
                 )
                 .join("");
 
+        const notesText =
+            String(
+                order.notes || ""
+            ).trim();
 
         note.innerHTML = `
+
             <header class="note-header">
 
-                <div>
+                <div class="note-company-block">
 
                     <div class="note-company-logo">
                         ${logoHTML}
@@ -898,64 +870,95 @@
 
                 <div class="note-document-info">
 
-                    <span>
-                        COMPROBANTE DE SERVICIO
-                    </span>
+                    <h1>
+                        NOTA DE SERVICIO
+                    </h1>
 
-                    <strong>
-                        ${escapeHTML(
+                    <div class="note-document-code">
+                        # ${escapeHTML(
                             order.code ||
                             "Sin folio"
                         )}
-                    </strong>
+                    </div>
 
-                    <small>
-                        ${formatNoteDate(
-                            order.createdAt
+                    <div class="note-balance-label">
+                        Saldo adeudado
+                    </div>
+
+                    <div class="note-balance-value">
+                        ${formatMoney(
+                            balance,
+                            currency
                         )}
-                    </small>
+                    </div>
 
                 </div>
 
             </header>
 
 
-            <section class="note-section">
+            <section class="note-meta-section">
 
-                <div class="note-section-title">
-                    DATOS DEL CLIENTE
+                <div class="note-client">
+
+                    <div class="note-client-label">
+                        Facturar a
+                    </div>
+
+                    <div class="note-client-name">
+                        ${escapeHTML(
+                            order.clientName ||
+                            "Sin cliente"
+                        )}
+                    </div>
+
+                    ${
+                        order.phone
+                            ? `
+                                <div class="note-client-phone">
+                                    ${escapeHTML(
+                                        order.phone
+                                    )}
+                                </div>
+                            `
+                            : ""
+                    }
+
                 </div>
 
 
-                <div class="note-client-grid">
+                <div class="note-dates">
 
-                    <div>
-                        <span>Cliente</span>
-
-                        <strong>
-                            ${escapeHTML(
-                                order.clientName ||
-                                "Sin cliente"
-                            )}
-                        </strong>
-                    </div>
-
-
-                    <div>
-                        <span>Teléfono</span>
-
-                        <strong>
-                            ${escapeHTML(
-                                order.phone ||
-                                "Sin teléfono"
-                            )}
-                        </strong>
-                    </div>
-
-
-                    <div>
+                    <div class="note-date-row">
                         <span>
-                            Fecha estimada de entrega
+                            Fecha de recepción :
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(
+                                formatNoteDate(
+                                    order.createdAt
+                                )
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="note-date-row">
+                        <span>
+                            Estado :
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(
+                                order.status ||
+                                "Recibido"
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="note-date-row">
+                        <span>
+                            Fecha de entrega :
                         </span>
 
                         <strong>
@@ -967,160 +970,150 @@
                         </strong>
                     </div>
 
-
-                    <div>
-                        <span>Estado</span>
-
-                        <strong>
-                            ${escapeHTML(
-                                order.status ||
-                                "Recibido"
-                            )}
-                        </strong>
-                    </div>
-
                 </div>
 
             </section>
 
 
-            <section class="note-section">
+            <table class="note-table">
 
-                <div class="note-section-title">
-                    SERVICIOS
-                </div>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>
+                            Artículo & Descripción
+                        </th>
+                        <th>Cant.</th>
+                        <th>Tarifa</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
 
+                <tbody>
+                    ${itemsHTML}
+                </tbody>
 
-                <div class="note-table-wrap">
-
-                    <table class="note-items-table">
-
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Descripción</th>
-                                <th>Cant.</th>
-                                <th>Precio</th>
-                                <th>Importe</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            ${itemsHTML}
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
+            </table>
 
 
-            ${
-                order.notes
-                    ? `
-                        <section class="note-section">
-
-                            <div class="note-section-title">
-                                OBSERVACIONES
-                            </div>
-
-                            <div class="note-observations">
-                                ${escapeHTML(
-                                    order.notes
-                                )}
-                            </div>
-
-                        </section>
-                    `
-                    : ""
-            }
-
-
-            <section class="note-summary">
-
-                <div class="note-payment-info">
-
-                    <span>
-                        Método de pago
-                    </span>
-
-                    <strong>
-                        ${escapeHTML(
-                            order.paymentMethod ||
-                            "No especificado"
-                        )}
-                    </strong>
-
-                </div>
-
+            <div class="note-totals-wrapper">
 
                 <div class="note-totals">
 
-                    <div>
-                        <span>Total</span>
+                    <div class="note-total-row">
+                        <span>
+                            Subtotal
+                        </span>
 
-                        <strong>
+                        <span>
+                            ${formatMoneyNumber(
+                                total
+                            )}
+                        </span>
+                    </div>
+
+                    <div class="note-total-row total">
+                        <span>
+                            Total
+                        </span>
+
+                        <span>
                             ${formatMoney(
                                 total,
                                 currency
                             )}
-                        </strong>
+                        </span>
                     </div>
 
+                    ${
+                        paid > 0
+                            ? `
+                                <div
+                                    class="note-total-row advance"
+                                >
+                                    <span>
+                                        Pagado
+                                    </span>
 
-                    <div>
-                        <span>Pagado</span>
+                                    <span>
+                                        ${formatMoney(
+                                            paid,
+                                            currency
+                                        )}
+                                    </span>
+                                </div>
+                            `
+                            : ""
+                    }
 
-                        <strong>
-                            ${formatMoney(
-                                paid,
-                                currency
-                            )}
-                        </strong>
-                    </div>
+                    <div class="note-total-row balance">
+                        <span>
+                            Saldo adeudado
+                        </span>
 
-
-                    <div class="note-balance">
-                        <span>Saldo</span>
-
-                        <strong>
+                        <span>
                             ${formatMoney(
                                 balance,
                                 currency
                             )}
-                        </strong>
+                        </span>
                     </div>
 
                 </div>
 
-            </section>
+            </div>
 
 
-            <section class="note-terms">
+            <div class="note-bottom-content">
 
-                <div class="note-section-title">
-                    TÉRMINOS DEL SERVICIO
-                </div>
+                <section class="note-notes">
 
-                <ol>
-                    ${termsHTML}
-                </ol>
+                    <div class="note-section-title">
+                        Notas
+                    </div>
 
-                <div class="note-terms-confirmation">
-                    Al entregar tus prendas aceptas
-                    y confirmas la conformidad con
-                    estos términos.
-                </div>
+                    <div class="note-customer-notes">
+                        ${
+                            notesText
+                                ? escapeHTML(
+                                    notesText
+                                )
+                                : escapeHTML(
+                                    business.message ||
+                                    "Gracias por su confianza."
+                                )
+                        }
+                    </div>
 
-            </section>
+                </section>
+
+
+                <section class="note-terms">
+
+                    <div class="note-terms-heading">
+                        Términos y condiciones
+                    </div>
+
+                    <div class="note-terms-subtitle">
+                        TÉRMINOS Y CONDICIONES DEL SERVICIO
+                    </div>
+
+                    <ol>
+                        ${termsHTML}
+                    </ol>
+
+                    <div class="note-acceptance">
+                        *Al entregar tus prendas aceptas
+                        y confirmas la conformidad con estos términos.*
+                    </div>
+
+                </section>
+
+            </div>
 
 
             <footer class="note-footer">
-                ${escapeHTML(
-                    business.message ||
-                    "Gracias por confiar en Pisada Bacana."
-                )}
+                Pisada Bacana · Sneaker Cleaning
             </footer>
         `;
     }
@@ -1137,7 +1130,6 @@
             const database =
                 getDatabase();
 
-
             const [
                 order,
                 settings
@@ -1147,7 +1139,6 @@
                     database.getSettings()
                 ]);
 
-
             if (!order) {
                 window.alert(
                     "No se encontró el pedido."
@@ -1156,40 +1147,33 @@
                 return;
             }
 
-
             currentNoteOrder =
                 order;
 
             currentNoteSettings =
                 settings || {};
 
-
             const modal =
                 ensureNoteModal();
-
 
             renderServiceNote(
                 order,
                 currentNoteSettings
             );
 
-
             const toolbarCode =
                 document.getElementById(
                     "noteToolbarCode"
                 );
-
 
             if (toolbarCode) {
                 toolbarCode.textContent =
                     `Nota ${order.code || ""}`;
             }
 
-
             modal.classList.add(
                 "visible"
             );
-
 
             document.body.classList.add(
                 "no-scroll"
@@ -1200,7 +1184,6 @@
                 "No se pudo cargar la nota:",
                 error
             );
-
 
             window.alert(
                 "No se pudo cargar la nota desde Firebase."
@@ -1215,16 +1198,13 @@
                 "serviceNoteModal"
             );
 
-
         if (!modal) {
             return;
         }
 
-
         modal.classList.remove(
             "visible"
         );
-
 
         currentNoteOrder =
             null;
@@ -1232,12 +1212,10 @@
         currentNoteSettings =
             null;
 
-
         const otherOpenElement =
             document.querySelector(
                 ".modal.visible, .drawer.visible, .sidebar.open"
             );
-
 
         if (!otherOpenElement) {
             document.body.classList.remove(
@@ -1248,7 +1226,7 @@
 
 
     /* =================================================
-       ESPERAR IMÁGENES
+       IMÁGENES
     ================================================= */
 
     async function waitForImages(
@@ -1261,7 +1239,6 @@
                 )
             );
 
-
         await Promise.all(
             images.map(
                 image => {
@@ -1273,13 +1250,11 @@
                         return Promise.resolve();
                     }
 
-
                     return new Promise(
                         resolve => {
 
                             const finish =
                                 () => resolve();
-
 
                             image.addEventListener(
                                 "load",
@@ -1289,7 +1264,6 @@
                                 }
                             );
 
-
                             image.addEventListener(
                                 "error",
                                 finish,
@@ -1297,7 +1271,6 @@
                                     once: true
                                 }
                             );
-
 
                             setTimeout(
                                 finish,
@@ -1312,7 +1285,7 @@
 
 
     /* =================================================
-       GENERAR PDF
+       PDF
     ================================================= */
 
     async function generateServiceNotePDF() {
@@ -1321,7 +1294,6 @@
                 "No hay una nota cargada."
             );
         }
-
 
         if (
             typeof window.html2canvas !==
@@ -1332,7 +1304,6 @@
             );
         }
 
-
         if (
             !window.jspdf ||
             !window.jspdf.jsPDF
@@ -1342,12 +1313,10 @@
             );
         }
 
-
         const note =
             document.getElementById(
                 "serviceNote"
             );
-
 
         if (!note) {
             throw new Error(
@@ -1355,311 +1324,237 @@
             );
         }
 
-
-        /*
-            Esperamos fuentes e imágenes antes
-            de capturar el comprobante.
-        */
-
         if (document.fonts?.ready) {
             try {
                 await document.fonts.ready;
             } catch {
-                // Continuamos aunque una fuente falle.
+                // Continuamos.
             }
         }
-
 
         await waitForImages(
             note
         );
 
+        const previousTransform =
+            note.style.transform;
 
-        /*
-            Capturamos el comprobante exactamente
-            como se muestra en pantalla.
+        const previousWidth =
+            note.style.width;
 
-            El toolbar no forma parte de #serviceNote,
-            por lo que no aparecerá en el PDF.
-        */
+        const previousMinWidth =
+            note.style.minWidth;
 
-        const canvas =
-            await window.html2canvas(
-                note,
-                {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: false,
-                    backgroundColor:
-                        "#ffffff",
-                    logging: false,
-                    imageTimeout: 5000,
-                    scrollX: 0,
-                    scrollY:
-                        -window.scrollY
-                }
-            );
+        note.style.transform =
+            "none";
 
+        note.style.width =
+            "210mm";
 
-        const imageData =
-            canvas.toDataURL(
-                "image/jpeg",
-                0.95
-            );
+        note.style.minWidth =
+            "210mm";
 
+        try {
 
-        const {
-            jsPDF
-        } = window.jspdf;
+            const canvas =
+                await window.html2canvas(
+                    note,
+                    {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: false,
+                        backgroundColor:
+                            "#ffffff",
+                        logging: false,
+                        imageTimeout: 5000,
+                        scrollX: 0,
+                        scrollY: 0
+                    }
+                );
 
+            const {
+                jsPDF
+            } = window.jspdf;
 
-        /*
-            A4:
-            210 x 297 mm
-        */
+            const pdf =
+                new jsPDF({
+                    orientation:
+                        "portrait",
+                    unit:
+                        "mm",
+                    format:
+                        "a4",
+                    compress:
+                        true
+                });
 
-        const pdf =
-            new jsPDF({
-                orientation:
-                    "portrait",
-                unit:
-                    "mm",
-                format:
-                    "a4",
-                compress:
-                    true
-            });
+            const pageWidth =
+                pdf.internal.pageSize
+                    .getWidth();
 
+            const pageHeight =
+                pdf.internal.pageSize
+                    .getHeight();
 
-        const pageWidth =
-            pdf.internal.pageSize
-                .getWidth();
+            const imageWidth =
+                pageWidth;
 
-        const pageHeight =
-            pdf.internal.pageSize
-                .getHeight();
+            const imageHeight =
+                canvas.height *
+                imageWidth /
+                canvas.width;
 
-
-        const margin =
-            8;
-
-
-        const usableWidth =
-            pageWidth -
-            margin * 2;
-
-
-        const usableHeight =
-            pageHeight -
-            margin * 2;
-
-
-        const imageWidth =
-            usableWidth;
-
-
-        const imageHeight =
-            canvas.height *
-            imageWidth /
-            canvas.width;
-
-
-        /*
-            Si la nota cabe en una hoja:
-            una sola página.
-        */
-
-        if (
-            imageHeight <=
-            usableHeight
-        ) {
-            pdf.addImage(
-                imageData,
-                "JPEG",
-                margin,
-                margin,
-                imageWidth,
-                imageHeight,
-                undefined,
-                "FAST"
-            );
-
-        } else {
-
-            /*
-                Para notas largas dividimos la misma
-                captura entre varias páginas A4.
-
-                De esta manera no aplastamos el
-                contenido para hacerlo ilegible.
-            */
-
-            const pixelsPerMM =
-                canvas.width /
-                imageWidth;
-
-
-            const pageSliceHeight =
+            const pageHeightPx =
                 Math.floor(
-                    usableHeight *
-                    pixelsPerMM
+                    canvas.width *
+                    pageHeight /
+                    pageWidth
                 );
 
-
-            let sourceY =
-                0;
-
-            let pageNumber =
-                0;
-
-
-            while (
-                sourceY <
-                canvas.height
+            if (
+                imageHeight <=
+                pageHeight
             ) {
-                const sliceHeight =
-                    Math.min(
-                        pageSliceHeight,
-                        canvas.height -
-                        sourceY
-                    );
-
-
-                const pageCanvas =
-                    document.createElement(
-                        "canvas"
-                    );
-
-
-                pageCanvas.width =
-                    canvas.width;
-
-                pageCanvas.height =
-                    sliceHeight;
-
-
-                const context =
-                    pageCanvas.getContext(
-                        "2d"
-                    );
-
-
-                if (!context) {
-                    throw new Error(
-                        "No se pudo preparar una página del PDF."
-                    );
-                }
-
-
-                context.fillStyle =
-                    "#ffffff";
-
-                context.fillRect(
-                    0,
-                    0,
-                    pageCanvas.width,
-                    pageCanvas.height
-                );
-
-
-                context.drawImage(
-                    canvas,
-                    0,
-                    sourceY,
-                    canvas.width,
-                    sliceHeight,
-                    0,
-                    0,
-                    canvas.width,
-                    sliceHeight
-                );
-
-
-                if (
-                    pageNumber > 0
-                ) {
-                    pdf.addPage();
-                }
-
-
-                const pageImage =
-                    pageCanvas.toDataURL(
+                const imageData =
+                    canvas.toDataURL(
                         "image/jpeg",
-                        0.95
+                        0.96
                     );
-
-
-                const renderedHeight =
-                    sliceHeight /
-                    pixelsPerMM;
-
 
                 pdf.addImage(
-                    pageImage,
+                    imageData,
                     "JPEG",
-                    margin,
-                    margin,
+                    0,
+                    0,
                     imageWidth,
-                    renderedHeight,
+                    imageHeight,
                     undefined,
                     "FAST"
                 );
+            } else {
+                let sourceY = 0;
+                let pageIndex = 0;
 
+                while (
+                    sourceY <
+                    canvas.height
+                ) {
+                    const sliceHeight =
+                        Math.min(
+                            pageHeightPx,
+                            canvas.height -
+                            sourceY
+                        );
 
-                sourceY +=
-                    sliceHeight;
+                    const sliceCanvas =
+                        document.createElement(
+                            "canvas"
+                        );
 
-                pageNumber +=
-                    1;
-            }
-        }
+                    sliceCanvas.width =
+                        canvas.width;
 
+                    sliceCanvas.height =
+                        sliceHeight;
 
-        const blob =
-            pdf.output(
-                "blob"
-            );
+                    const context =
+                        sliceCanvas.getContext(
+                            "2d"
+                        );
 
+                    context.fillStyle =
+                        "#ffffff";
 
-        const code =
-            sanitizeFileName(
-                currentNoteOrder.code ||
-                currentNoteOrder.id ||
-                "nota"
-            );
+                    context.fillRect(
+                        0,
+                        0,
+                        sliceCanvas.width,
+                        sliceCanvas.height
+                    );
 
+                    context.drawImage(
+                        canvas,
+                        0,
+                        sourceY,
+                        canvas.width,
+                        sliceHeight,
+                        0,
+                        0,
+                        canvas.width,
+                        sliceHeight
+                    );
 
-        const fileName =
-            `Pisada-Bacana-${code}.pdf`;
+                    const pageImage =
+                        sliceCanvas.toDataURL(
+                            "image/jpeg",
+                            0.96
+                        );
 
+                    const sliceHeightMM =
+                        sliceHeight *
+                        imageWidth /
+                        canvas.width;
 
-        const file =
-            new File(
-                [blob],
-                fileName,
-                {
-                    type:
-                        "application/pdf",
-                    lastModified:
-                        Date.now()
+                    if (
+                        pageIndex > 0
+                    ) {
+                        pdf.addPage();
+                    }
+
+                    pdf.addImage(
+                        pageImage,
+                        "JPEG",
+                        0,
+                        0,
+                        imageWidth,
+                        sliceHeightMM,
+                        undefined,
+                        "FAST"
+                    );
+
+                    sourceY +=
+                        sliceHeight;
+
+                    pageIndex += 1;
                 }
-            );
+            }
 
+            const blob =
+                pdf.output(
+                    "blob"
+                );
 
-        return {
-            pdf,
-            blob,
-            file,
-            fileName
-        };
+            const fileName =
+                `${sanitizeFileName(
+                    currentNoteOrder.code ||
+                    "nota"
+                )}.pdf`;
+
+            return {
+                blob,
+                fileName,
+                pdf
+            };
+
+        } finally {
+
+            note.style.transform =
+                previousTransform;
+
+            note.style.width =
+                previousWidth;
+
+            note.style.minWidth =
+                previousMinWidth;
+        }
     }
 
 
     /* =================================================
-       DESCARGA FALLBACK
+       DESCARGAR
     ================================================= */
 
-    function downloadPDF(
+    function downloadBlob(
         blob,
         fileName
     ) {
@@ -1668,12 +1563,10 @@
                 blob
             );
 
-
         const link =
             document.createElement(
                 "a"
             );
-
 
         link.href =
             url;
@@ -1681,17 +1574,13 @@
         link.download =
             fileName;
 
-
         document.body.appendChild(
             link
         );
 
-
         link.click();
 
-
         link.remove();
-
 
         setTimeout(
             () => {
@@ -1705,7 +1594,7 @@
 
 
     /* =================================================
-       COMPARTIR PDF
+       COMPARTIR
     ================================================= */
 
     async function shareServiceNotePDF() {
@@ -1715,98 +1604,69 @@
             return;
         }
 
-
-        if (!currentNoteOrder) {
-            window.alert(
-                "No hay una nota cargada."
-            );
-
-            return;
-        }
-
-
         const button =
             document.getElementById(
                 "shareServiceNoteButton"
             );
 
-
         const originalText =
             button?.textContent ||
             "Enviar PDF por WhatsApp";
 
+        isGeneratingPDF =
+            true;
 
-        try {
-            isGeneratingPDF =
+        if (button) {
+            button.disabled =
                 true;
 
+            button.textContent =
+                "Generando PDF...";
+        }
 
-            if (button) {
-                button.disabled =
-                    true;
-
-                button.textContent =
-                    "Generando PDF...";
-            }
-
-
+        try {
             const {
                 blob,
-                file,
                 fileName
             } =
                 await generateServiceNotePDF();
 
+            const file =
+                new File(
+                    [blob],
+                    fileName,
+                    {
+                        type:
+                            "application/pdf"
+                    }
+                );
 
-            /*
-                Web Share API.
+            const shareData = {
+                files:
+                    [file],
 
-                No podemos obligar al sistema a abrir
-                exclusivamente WhatsApp. El navegador
-                abre el menú nativo de compartir y el
-                usuario selecciona WhatsApp.
+                title:
+                    `Nota ${currentNoteOrder?.code || ""}`,
 
-                Esto sí permite pasar el PDF como
-                archivo adjunto.
-            */
+                text:
+                    `Nota de servicio ${currentNoteOrder?.code || ""} - Pisada Bacana`
+            };
 
-            const canShareFile =
-                typeof navigator.share ===
-                    "function" &&
-                typeof navigator.canShare ===
-                    "function" &&
+            if (
+                navigator.share &&
+                navigator.canShare &&
                 navigator.canShare({
-                    files: [file]
-                });
-
-
-            if (canShareFile) {
-
-                if (button) {
-                    button.textContent =
-                        "Abriendo opciones...";
-                }
-
-
+                    files:
+                        [file]
+                })
+            ) {
                 try {
-                    await navigator.share({
-                        files: [file],
-                        title:
-                            `Nota ${currentNoteOrder.code || ""}`
-                    });
-
+                    await navigator.share(
+                        shareData
+                    );
 
                     return;
-
                 } catch (error) {
-
-                    /*
-                        AbortError significa que el usuario
-                        cerró el selector. No descargamos
-                        automáticamente porque no fue un
-                        fallo técnico.
-                    */
-
                     if (
                         error?.name ===
                         "AbortError"
@@ -1814,30 +1674,20 @@
                         return;
                     }
 
-
                     console.warn(
-                        "No se pudo compartir el PDF:",
+                        "No se pudo compartir directamente:",
                         error
                     );
                 }
             }
 
-
-            /*
-                Fallback para computadoras o navegadores
-                que no permiten compartir archivos.
-
-                Guardamos exactamente el mismo PDF.
-            */
-
-            downloadPDF(
+            downloadBlob(
                 blob,
                 fileName
             );
 
-
             window.alert(
-                "Tu navegador no permite compartir el PDF directamente. La nota se descargó para que puedas adjuntarla en WhatsApp Web."
+                "La nota se descargó en PDF. Ábrela o adjúntala desde WhatsApp."
             );
 
         } catch (error) {
@@ -1846,15 +1696,13 @@
                 error
             );
 
-
             window.alert(
-                "No se pudo generar el PDF de la nota. Revisa la consola del navegador para ver el error."
+                "No se pudo generar el PDF de la nota. Revisa la consola del navegador."
             );
 
         } finally {
             isGeneratingPDF =
                 false;
-
 
             if (button) {
                 button.disabled =
@@ -1877,47 +1725,69 @@
                 "#orderDrawer .drawer-footer"
             );
 
-
         if (!drawerFooter) {
             return;
         }
 
-
-        const existingButton =
-            document.getElementById(
-                "openServiceNoteButton"
-            ) ||
+        const oldButton =
             document.getElementById(
                 "printOrderNoteButton"
             );
 
+        if (oldButton) {
+            const replacement =
+                oldButton.cloneNode(
+                    true
+                );
 
-        if (existingButton) {
-            existingButton.textContent =
+            replacement.id =
+                "openServiceNoteButton";
+
+            replacement.textContent =
                 "Nota de servicio";
 
+            oldButton.replaceWith(
+                replacement
+            );
+        }
+
+        let button =
+            document.getElementById(
+                "openServiceNoteButton"
+            );
+
+        if (!button) {
+            button =
+                document.createElement(
+                    "button"
+                );
+
+            button.id =
+                "openServiceNoteButton";
+
+            button.type =
+                "button";
+
+            button.className =
+                "secondary-button";
+
+            button.textContent =
+                "Nota de servicio";
+
+            drawerFooter.prepend(
+                button
+            );
+        }
+
+        if (
+            button.dataset.noteReady ===
+            "1"
+        ) {
             return;
         }
 
-
-        const button =
-            document.createElement(
-                "button"
-            );
-
-
-        button.id =
-            "openServiceNoteButton";
-
-        button.type =
-            "button";
-
-        button.className =
-            "secondary-button";
-
-        button.textContent =
-            "Nota de servicio";
-
+        button.dataset.noteReady =
+            "1";
 
         button.addEventListener(
             "click",
@@ -1928,13 +1798,11 @@
                         "detailOrderCode"
                     );
 
-
                 const code =
                     String(
                         codeElement?.textContent ||
                         ""
                     ).trim();
-
 
                 if (!code) {
                     window.alert(
@@ -1944,36 +1812,16 @@
                     return;
                 }
 
-
                 openServiceNote(
                     code
                 );
             }
         );
-
-
-        const saveButton =
-            document.getElementById(
-                "saveOrderChangesButton"
-            );
-
-
-        if (saveButton) {
-            drawerFooter.insertBefore(
-                button,
-                saveButton
-            );
-
-        } else {
-            drawerFooter.appendChild(
-                button
-            );
-        }
     }
 
 
     /* =================================================
-       TECLA ESC
+       EVENTOS
     ================================================= */
 
     document.addEventListener(
@@ -1987,12 +1835,10 @@
                 return;
             }
 
-
             const modal =
                 document.getElementById(
                     "serviceNoteModal"
                 );
-
 
             if (
                 modal?.classList.contains(
@@ -2001,6 +1847,40 @@
             ) {
                 closeServiceNote();
             }
+        }
+    );
+
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target.closest(
+                    "#orderDrawer"
+                )
+            ) {
+                setTimeout(
+                    createDrawerNoteButton,
+                    0
+                );
+            }
+        }
+    );
+
+
+    const observer =
+        new MutationObserver(
+            () => {
+                createDrawerNoteButton();
+            }
+        );
+
+    observer.observe(
+        document.body,
+        {
+            childList: true,
+            subtree: true
         }
     );
 
@@ -2024,30 +1904,6 @@
     };
 
 
-    /* =================================================
-       INICIO
-    ================================================= */
-
-    function initialize() {
-        ensureNoteModal();
-        createDrawerNoteButton();
-    }
-
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            initialize,
-            {
-                once: true
-            }
-        );
-
-    } else {
-        initialize();
-    }
+    createDrawerNoteButton();
 
 })();
