@@ -13,41 +13,190 @@ function getDatabase() {
 }
 
 function waitForFirestore() {
-    if (window.PisadaBacanaDB) {
+
+    /*
+        CASO 1:
+        El bootstrap ya terminó correctamente.
+    */
+    if (
+        window.PisadaBacanaFirebase?.ready === true
+    ) {
         return Promise.resolve();
     }
 
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            reject(
-                new Error(
-                    "Firebase tardó demasiado en iniciar."
-                )
-            );
-        }, 10000);
 
-        window.addEventListener(
-            "pisadabacana:firestore-ready",
-            () => {
-                clearTimeout(timeout);
+    /*
+        CASO 2:
+        La API de base de datos ya está disponible.
+
+        database.js ya se encarga de esperar
+        ensureAnonymousSession() antes de cada
+        operación contra Firestore, por lo que
+        podemos continuar de forma segura.
+    */
+    if (
+        window.PisadaBacanaDB
+    ) {
+        return Promise.resolve();
+    }
+
+
+    /*
+        CASO 3:
+        Ninguno está disponible todavía.
+        Esperamos el bootstrap.
+    */
+    return new Promise(
+        (resolve, reject) => {
+
+            let finished = false;
+            let timeout = null;
+
+
+            function cleanup() {
+
+                window.removeEventListener(
+                    "pisadabacana:firestore-ready",
+                    handleReady
+                );
+
+                window.removeEventListener(
+                    "pisadabacana:firestore-error",
+                    handleError
+                );
+
+
+                if (timeout !== null) {
+
+                    clearTimeout(timeout);
+
+                    timeout = null;
+
+                }
+
+            }
+
+
+            function finishResolve() {
+
+                if (finished) {
+                    return;
+                }
+
+
+                finished = true;
+
+                cleanup();
+
                 resolve();
-            },
-            { once: true }
-        );
 
-        window.addEventListener(
-            "pisadabacana:firestore-error",
-            event => {
-                clearTimeout(timeout);
+            }
+
+
+            function finishReject(error) {
+
+                if (finished) {
+                    return;
+                }
+
+
+                finished = true;
+
+                cleanup();
 
                 reject(
-                    event.detail?.error ||
-                    new Error("Error de Firebase.")
+                    error ||
+                    new Error(
+                        "No se pudo iniciar Firebase."
+                    )
                 );
-            },
-            { once: true }
-        );
-    });
+
+            }
+
+
+            function handleReady() {
+
+                finishResolve();
+
+            }
+
+
+            function handleError(event) {
+
+                finishReject(
+                    event.detail?.error ||
+                    new Error(
+                        "Error iniciando Firebase."
+                    )
+                );
+
+            }
+
+
+            window.addEventListener(
+                "pisadabacana:firestore-ready",
+                handleReady
+            );
+
+
+            window.addEventListener(
+                "pisadabacana:firestore-error",
+                handleError
+            );
+
+
+            /*
+                Segunda comprobación.
+
+                Evita una condición de carrera si
+                Firebase terminó exactamente mientras
+                instalábamos los listeners.
+            */
+            if (
+                window.PisadaBacanaFirebase?.ready === true ||
+                window.PisadaBacanaDB
+            ) {
+
+                finishResolve();
+
+                return;
+
+            }
+
+
+            timeout =
+                setTimeout(
+                    () => {
+
+                        /*
+                            Última comprobación antes
+                            de declarar timeout.
+                        */
+                        if (
+                            window.PisadaBacanaFirebase?.ready === true ||
+                            window.PisadaBacanaDB
+                        ) {
+
+                            finishResolve();
+
+                            return;
+
+                        }
+
+
+                        finishReject(
+                            new Error(
+                                "Firebase tardó demasiado en iniciar."
+                            )
+                        );
+
+                    },
+                    15000
+                );
+
+        }
+    );
+
 }
 
 
