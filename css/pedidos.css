@@ -1038,6 +1038,21 @@ tbody tr:hover {
     background: #fbfcff;
 }
 
+/* FILAS DE PEDIDOS SELECCIONABLES */
+
+.orders-panel tbody tr.clickable-order-row {
+    cursor: pointer;
+}
+
+.orders-panel tbody tr.clickable-order-row:hover {
+    background: #fbfcff;
+}
+
+.orders-panel tbody tr.clickable-order-row:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: -2px;
+}
+
 .cell-main,
 .cell-sub {
     display: block;

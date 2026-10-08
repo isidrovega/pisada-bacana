@@ -2067,22 +2067,66 @@ function renderOrders() {
     );
 
     ordersTableBody
-        .querySelectorAll(
-            ".action-button"
-        )
-        .forEach(
-            button => {
-                button.addEventListener(
-                    "click",
-                    () => {
-                        openOrderDetail(
-                            button.dataset
-                                .orderId
-                        );
-                    }
-                );
-            }
+    .querySelectorAll("tr")
+    .forEach(row => {
+
+        const button = row.querySelector(
+            ".action-button[data-order-id]"
         );
+
+        if (!button) {
+            return;
+        }
+
+        const orderId = button.dataset.orderId;
+
+        row.classList.add("clickable-order-row");
+
+        row.tabIndex = 0;
+        row.setAttribute("role", "button");
+        row.setAttribute(
+            "aria-label",
+            "Ver detalle del pedido"
+        );
+
+        row.addEventListener("click", event => {
+
+            // Los controles interactivos mantienen
+            // sus acciones originales.
+            if (
+                event.target.closest(
+                    "button, a, input, select, textarea"
+                )
+            ) {
+                return;
+            }
+
+            openOrderDetail(orderId);
+        });
+
+        row.addEventListener("keydown", event => {
+
+            if (
+                event.target !== row ||
+                (
+                    event.key !== "Enter" &&
+                    event.key !== " "
+                )
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+
+            openOrderDetail(orderId);
+        });
+
+        // Conserva el funcionamiento de la flecha.
+        button.addEventListener("click", () => {
+            openOrderDetail(orderId);
+        });
+
+    });
 }
 
 
