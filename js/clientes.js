@@ -746,6 +746,19 @@ function renderClients() {
                     "tr"
                 );
 
+                row.classList.add("clickable-client-row");
+
+row.style.cursor = "pointer";
+
+row.tabIndex = 0;
+
+row.setAttribute("role", "button");
+
+row.setAttribute(
+    "aria-label",
+    `Ver detalles de ${client.name}`
+);
+
 
             const activeBadge =
                 client.activeCount > 0
@@ -1310,28 +1323,66 @@ filters.addEventListener(
     }
 );
 
+/* =====================================================
+   ABRIR DETALLE DESDE CUALQUIER PARTE DE LA FILA
+===================================================== */
 
-clientsTable.addEventListener(
-    "click",
-    event => {
+clientsTable.addEventListener("click", event => {
 
-        const button =
-            event.target.closest(
-                "[data-client-key]"
-            );
+    const row = event.target.closest("tr");
 
-
-        if (!button) {
-            return;
-        }
-
-
-        openClientDetail(
-            button.dataset.clientKey
-        );
-
+    if (!row || !clientsTable.contains(row)) {
+        return;
     }
-);
+
+    const button = row.querySelector("[data-client-key]");
+
+    if (!button) {
+        return;
+    }
+
+    // Si se presiona otro control interactivo,
+    // respetamos su comportamiento original.
+    if (
+        event.target.closest(
+            "a, input, select, textarea, button:not([data-client-key])"
+        )
+    ) {
+        return;
+    }
+
+    openClientDetail(button.dataset.clientKey);
+});
+
+
+/* ACCESIBILIDAD CON TECLADO */
+
+clientsTable.addEventListener("keydown", event => {
+
+    if (!["Enter", " "].includes(event.key)) {
+        return;
+    }
+
+    const row = event.target.closest("tr");
+
+    if (
+        !row ||
+        !clientsTable.contains(row) ||
+        event.target !== row
+    ) {
+        return;
+    }
+
+    const button = row.querySelector("[data-client-key]");
+
+    if (!button) {
+        return;
+    }
+
+    event.preventDefault();
+
+    openClientDetail(button.dataset.clientKey);
+});
 
 
 closeDrawerButton.addEventListener(

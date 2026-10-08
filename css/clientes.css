@@ -2760,3 +2760,18 @@ textarea:focus-visible {
             1 !important;
     }
 }
+
+/* FILAS DE CLIENTES SELECCIONABLES */
+
+.clickable-client-row {
+    cursor: pointer;
+}
+
+.clickable-client-row:hover {
+    background: #fbfcff;
+}
+
+.clickable-client-row:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: -2px;
+}
