@@ -3027,5 +3027,41 @@ async function initialize() {
     }
 }
 
+/* =====================================================
+   ABRIR DETALLE AL HACER CLIC EN TODA LA FILA
+===================================================== */
+
+function enableOrderRowClick() {
+    const table = document.querySelector(".orders-panel table");
+
+    if (!table) return;
+
+    table.addEventListener("click", (event) => {
+        const row = event.target.closest("tbody tr");
+
+        if (!row) return;
+
+        // Evita duplicar acciones de botones o enlaces.
+        if (
+            event.target.closest(
+                "button, a, input, select, textarea"
+            )
+        ) {
+            return;
+        }
+
+        // Reutiliza el botón existente que abre el detalle.
+        const detailButton = row.querySelector(
+            ".table-action, .view-button"
+        );
+
+        if (detailButton) {
+            detailButton.click();
+        }
+    });
+}
+
+enableOrderRowClick();
+
 
 initialize();

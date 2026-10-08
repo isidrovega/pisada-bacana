@@ -3536,3 +3536,20 @@ textarea:focus-visible {
         animation-iteration-count: 1 !important;
     }
 }
+
+/* Fila completa seleccionable */
+
+.orders-panel tbody tr:has(.table-action),
+.orders-panel tbody tr:has(.view-button) {
+    cursor: pointer;
+}
+
+.orders-panel tbody tr:has(.table-action):hover,
+.orders-panel tbody tr:has(.view-button):hover {
+    background: #edf3ff;
+}
+
+.orders-panel tbody tr:has(.table-action):active,
+.orders-panel tbody tr:has(.view-button):active {
+    background: #e1ebff;
+}
