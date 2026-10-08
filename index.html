@@ -383,142 +383,227 @@
 <!-- DETALLE DEL PEDIDO EN DASHBOARD -->
 <aside
     class="drawer"
-    id="dashboardOrderDrawer"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Detalle del pedido"
+    id="orderDrawer"
 >
+
     <div class="drawer-header">
+
         <div>
             <span class="eyebrow">DETALLE DEL PEDIDO</span>
-            <h3 id="dashboardDetailCode">PB-0000</h3>
+
+            <h3 id="detailOrderCode">
+                PB-0000
+            </h3>
         </div>
 
         <button
             class="modal-close"
-            id="dashboardCloseDrawer"
+            id="closeDrawerButton"
             type="button"
-            aria-label="Cerrar detalle"
         >
             ×
         </button>
+
     </div>
 
+
     <div class="drawer-content">
+
+        <!-- CLIENTE -->
         <section class="detail-section">
-            <span class="detail-label">Cliente</span>
-            <h4 id="dashboardDetailClient">-</h4>
-            <p id="dashboardDetailPhone">-</p>
+
+            <span class="detail-label">
+                Cliente
+            </span>
+
+            <h4 id="detailClientName">
+                -
+            </h4>
+
+            <p id="detailClientPhone">
+                -
+            </p>
+
         </section>
 
+
+        <!-- ARTÍCULOS -->
         <section class="detail-section">
+
             <div class="detail-section-title">
-                <span class="detail-label">Artículos</span>
+
+                <span class="detail-label">
+                    Artículos
+                </span>
+
                 <span
                     class="detail-count"
-                    id="dashboardDetailItemsCount"
-                >0</span>
+                    id="detailItemsCount"
+                >
+                    0
+                </span>
+
             </div>
+
 
             <div
                 class="detail-items"
-                id="dashboardDetailItems"
+                id="detailItems"
             ></div>
+
         </section>
 
+
+        <!-- OBSERVACIONES -->
         <section class="detail-section">
-            <span class="detail-label">Observaciones</span>
+
+            <span class="detail-label">
+                Observaciones
+            </span>
+
             <p
                 class="detail-notes"
-                id="dashboardDetailNotes"
-            >Sin observaciones.</p>
+                id="detailNotes"
+            >
+                Sin observaciones.
+            </p>
+
         </section>
 
+
+        <!-- ESTADO -->
         <section class="detail-section">
+
             <div class="form-group">
-                <label for="dashboardDetailStatus">
+
+                <label for="detailStatus">
                     Estado del pedido
                 </label>
 
-                <select id="dashboardDetailStatus">
-                    <option value="Recibido">Recibido</option>
-                    <option value="En espera">En espera</option>
-                    <option value="Lavando">Lavando</option>
-                    <option value="Secando">Secando</option>
-                    <option value="Listo">Listo</option>
-                    <option value="Entregado">Entregado</option>
+                <select id="detailStatus">
+
+                    <option value="Recibido">
+                        Recibido
+                    </option>
+
+                    <option value="En espera">
+                        En espera
+                    </option>
+
+                    <option value="Lavando">
+                        Lavando
+                    </option>
+
+                    <option value="Secando">
+                        Secando
+                    </option>
+
+                    <option value="Listo">
+                        Listo
+                    </option>
+
+                    <option value="Entregado">
+                        Entregado
+                    </option>
+
                 </select>
+
             </div>
+
 
             <div
                 class="progress-steps"
-                id="dashboardProgressSteps"
+                id="progressSteps"
             ></div>
+
         </section>
 
+
+        <!-- PAGO -->
         <section class="detail-section">
-            <span class="detail-label">Pago</span>
+
+            <span class="detail-label">
+                Pago
+            </span>
+
 
             <div class="payment-summary">
+
                 <div>
                     <span>Total</span>
-                    <strong id="dashboardDetailTotal">$0</strong>
+                    <strong id="detailTotal">$0</strong>
                 </div>
 
                 <div>
                     <span>Pagado</span>
-                    <strong id="dashboardDetailPaid">$0</strong>
+                    <strong id="detailPaid">$0</strong>
                 </div>
 
                 <div>
                     <span>Pendiente</span>
-                    <strong id="dashboardDetailBalance">$0</strong>
+                    <strong id="detailBalance">$0</strong>
                 </div>
+
             </div>
 
+
             <div class="payment-register">
+
                 <div class="form-group">
-                    <label for="dashboardPaymentAmount">
+
+                    <label for="paymentAmount">
                         Registrar pago
                     </label>
 
                     <input
-                        id="dashboardPaymentAmount"
+                        id="paymentAmount"
                         type="number"
                         min="0"
                         step="0.01"
                         placeholder="0.00"
                     >
+
                 </div>
 
                 <button
                     class="secondary-button"
-                    id="dashboardRegisterPayment"
+                    id="registerPaymentButton"
                     type="button"
                 >
                     Registrar
                 </button>
+
             </div>
+
         </section>
 
+
+        <!-- ENTREGA -->
         <section class="detail-section">
+
             <div class="form-group">
-                <label for="dashboardDeliveryDate">
+
+                <label for="detailDeliveryDate">
                     Fecha de entrega
                 </label>
 
                 <input
-                    id="dashboardDeliveryDate"
+                    id="detailDeliveryDate"
                     type="date"
                 >
+
             </div>
+
         </section>
+
     </div>
 
+
     <div class="drawer-footer">
+
         <button
             class="danger-outline-button"
-            id="dashboardDeleteOrder"
+            id="deleteOrderButton"
             type="button"
         >
             Eliminar
@@ -526,12 +611,14 @@
 
         <button
             class="primary-button"
-            id="dashboardSaveOrder"
+            id="saveOrderChangesButton"
             type="button"
         >
             Guardar cambios
         </button>
+
     </div>
+
 </aside>
 
 
