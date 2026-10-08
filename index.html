@@ -380,6 +380,160 @@
     id="overlay"
 ></div>
 
+<!-- DETALLE DEL PEDIDO EN DASHBOARD -->
+<aside
+    class="drawer"
+    id="dashboardOrderDrawer"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Detalle del pedido"
+>
+    <div class="drawer-header">
+        <div>
+            <span class="eyebrow">DETALLE DEL PEDIDO</span>
+            <h3 id="dashboardDetailCode">PB-0000</h3>
+        </div>
+
+        <button
+            class="modal-close"
+            id="dashboardCloseDrawer"
+            type="button"
+            aria-label="Cerrar detalle"
+        >
+            ×
+        </button>
+    </div>
+
+    <div class="drawer-content">
+        <section class="detail-section">
+            <span class="detail-label">Cliente</span>
+            <h4 id="dashboardDetailClient">-</h4>
+            <p id="dashboardDetailPhone">-</p>
+        </section>
+
+        <section class="detail-section">
+            <div class="detail-section-title">
+                <span class="detail-label">Artículos</span>
+                <span
+                    class="detail-count"
+                    id="dashboardDetailItemsCount"
+                >0</span>
+            </div>
+
+            <div
+                class="detail-items"
+                id="dashboardDetailItems"
+            ></div>
+        </section>
+
+        <section class="detail-section">
+            <span class="detail-label">Observaciones</span>
+            <p
+                class="detail-notes"
+                id="dashboardDetailNotes"
+            >Sin observaciones.</p>
+        </section>
+
+        <section class="detail-section">
+            <div class="form-group">
+                <label for="dashboardDetailStatus">
+                    Estado del pedido
+                </label>
+
+                <select id="dashboardDetailStatus">
+                    <option value="Recibido">Recibido</option>
+                    <option value="En espera">En espera</option>
+                    <option value="Lavando">Lavando</option>
+                    <option value="Secando">Secando</option>
+                    <option value="Listo">Listo</option>
+                    <option value="Entregado">Entregado</option>
+                </select>
+            </div>
+
+            <div
+                class="progress-steps"
+                id="dashboardProgressSteps"
+            ></div>
+        </section>
+
+        <section class="detail-section">
+            <span class="detail-label">Pago</span>
+
+            <div class="payment-summary">
+                <div>
+                    <span>Total</span>
+                    <strong id="dashboardDetailTotal">$0</strong>
+                </div>
+
+                <div>
+                    <span>Pagado</span>
+                    <strong id="dashboardDetailPaid">$0</strong>
+                </div>
+
+                <div>
+                    <span>Pendiente</span>
+                    <strong id="dashboardDetailBalance">$0</strong>
+                </div>
+            </div>
+
+            <div class="payment-register">
+                <div class="form-group">
+                    <label for="dashboardPaymentAmount">
+                        Registrar pago
+                    </label>
+
+                    <input
+                        id="dashboardPaymentAmount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                    >
+                </div>
+
+                <button
+                    class="secondary-button"
+                    id="dashboardRegisterPayment"
+                    type="button"
+                >
+                    Registrar
+                </button>
+            </div>
+        </section>
+
+        <section class="detail-section">
+            <div class="form-group">
+                <label for="dashboardDeliveryDate">
+                    Fecha de entrega
+                </label>
+
+                <input
+                    id="dashboardDeliveryDate"
+                    type="date"
+                >
+            </div>
+        </section>
+    </div>
+
+    <div class="drawer-footer">
+        <button
+            class="danger-outline-button"
+            id="dashboardDeleteOrder"
+            type="button"
+        >
+            Eliminar
+        </button>
+
+        <button
+            class="primary-button"
+            id="dashboardSaveOrder"
+            type="button"
+        >
+            Guardar cambios
+        </button>
+    </div>
+</aside>
+
 
 <div
     class="modal"

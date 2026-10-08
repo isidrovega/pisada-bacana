@@ -515,15 +515,41 @@ function renderRecentOrders() {
                 </td>
 
                 <td>
-                    <a
-                        href="pedidos.html"
-                        class="row-action"
-                        title="Abrir pedidos"
-                    >
-                        ›
-                    </a>
+                   <button
+        type="button"
+        class="row-action"
+        title="Ver detalle del pedido"
+        aria-label="Ver detalle del pedido"
+    >
+        ›
+    </button>
                 </td>
             `;
+
+            row.classList.add("clickable-order-row");
+
+row.tabIndex = 0;
+row.setAttribute("role", "button");
+row.setAttribute(
+    "aria-label",
+    `Ver detalle del pedido ${order.code || ""}`
+);
+
+row.addEventListener("click", () => {
+    openDashboardOrderDetail(order.id);
+});
+
+row.addEventListener("keydown", event => {
+    if (
+        event.target !== row ||
+        !["Enter", " "].includes(event.key)
+    ) {
+        return;
+    }
+
+    event.preventDefault();
+    openDashboardOrderDetail(order.id);
+});
 
 
             ordersTable.appendChild(
@@ -1313,6 +1339,419 @@ async function initialize() {
     }
 
 }
+
+/* =====================================================
+   DETALLE DE PEDIDOS - DASHBOARD
+===================================================== */
+
+let dashboardSelectedOrderId = null;
+
+const dashboardDrawer =
+    document.getElementById("dashboardOrderDrawer");
+
+const dashboardProgressStatuses = [
+    "Recibido",
+    "Lavando",
+    "Secando",
+    "Listo",
+    "Entregado"
+];
+
+function dashboardGetSelectedOrder() {
+    return orders.find(
+        order =>
+            String(order.id) ===
+            String(dashboardSelectedOrderId)
+    ) || null;
+}
+
+function dashboardGetItems(order) {
+    if (
+        Array.isArray(order.items) &&
+        order.items.length > 0
+    ) {
+        return order.items;
+    }
+
+    return [{
+        itemType: order.itemType || "Tenis",
+        brand: order.brand || "",
+        model: order.model || "",
+        color: order.color || "",
+        service: order.service || "",
+        price: Number(order.price || 0)
+    }];
+}
+
+function dashboardGetTotal(order) {
+    if (
+        Array.isArray(order.items) &&
+        order.items.length > 0
+    ) {
+        return order.items.reduce(
+            (total, item) =>
+                total + Math.max(
+                    Number(item.price || 0),
+                    0
+                ),
+            0
+        );
+    }
+
+    return Math.max(
+        Number(order.total ?? order.price ?? 0),
+        0
+    );
+}
+
+function dashboardGetPaid(order) {
+    if (Array.isArray(order.payments)) {
+        return order.payments.reduce(
+            (total, payment) =>
+                total + Math.max(
+                    Number(payment.amount || 0),
+                    0
+                ),
+            0
+        );
+    }
+
+    return Math.max(
+        Number(order.paid ?? order.advance ?? 0),
+        0
+    );
+}
+
+function dashboardRenderProgress(status) {
+    const container =
+        document.getElementById("dashboardProgressSteps");
+
+    container.innerHTML = "";
+
+    const currentIndex =
+        status === "En espera"
+            ? 0
+            : dashboardProgressStatuses.indexOf(status);
+
+    dashboardProgressStatuses.forEach((step, index) => {
+        const element = document.createElement("div");
+
+        element.className = "progress-step";
+
+        if (index < currentIndex) {
+            element.classList.add("completed");
+        }
+
+        if (index === currentIndex) {
+            element.classList.add("current");
+        }
+
+        element.innerHTML = `
+            <div class="progress-dot"></div>
+            <span>${escapeHTML(step)}</span>
+        `;
+
+        container.appendChild(element);
+    });
+}
+
+function openDashboardOrderDetail(orderId) {
+    dashboardSelectedOrderId = orderId;
+
+    const order = dashboardGetSelectedOrder();
+
+    if (!order) {
+        dashboardSelectedOrderId = null;
+        return;
+    }
+
+    document.getElementById(
+        "dashboardDetailCode"
+    ).textContent = order.code || "Sin folio";
+
+    document.getElementById(
+        "dashboardDetailClient"
+    ).textContent = order.clientName || "Sin cliente";
+
+    document.getElementById(
+        "dashboardDetailPhone"
+    ).textContent = order.phone || "Sin teléfono";
+
+    document.getElementById(
+        "dashboardDetailNotes"
+    ).textContent = order.notes || "Sin observaciones.";
+
+    document.getElementById(
+        "dashboardDetailStatus"
+    ).value = order.status || "Recibido";
+
+    document.getElementById(
+        "dashboardDeliveryDate"
+    ).value = order.deliveryDate || "";
+
+    document.getElementById(
+        "dashboardPaymentAmount"
+    ).value = "";
+
+    const items = dashboardGetItems(order);
+
+    document.getElementById(
+        "dashboardDetailItemsCount"
+    ).textContent = items.length;
+
+    const itemsContainer =
+        document.getElementById("dashboardDetailItems");
+
+    itemsContainer.innerHTML = "";
+
+    items.forEach((item, index) => {
+        const element = document.createElement("div");
+
+        element.className = "detail-item";
+
+        const itemName = [
+            item.brand,
+            item.model
+        ].filter(Boolean).join(" ");
+
+        element.innerHTML = `
+            <strong>
+                ${escapeHTML(itemName || item.itemType || "Artículo")}
+            </strong>
+            <p>
+                ${escapeHTML(item.service || "Sin servicio")}
+                ${item.color ? " · " + escapeHTML(item.color) : ""}
+            </p>
+            <span>${formatMoney(item.price)}</span>
+        `;
+
+        itemsContainer.appendChild(element);
+    });
+
+    const total = dashboardGetTotal(order);
+    const paid = dashboardGetPaid(order);
+
+    document.getElementById(
+        "dashboardDetailTotal"
+    ).textContent = formatMoney(total);
+
+    document.getElementById(
+        "dashboardDetailPaid"
+    ).textContent = formatMoney(paid);
+
+    document.getElementById(
+        "dashboardDetailBalance"
+    ).textContent = formatMoney(
+        Math.max(total - paid, 0)
+    );
+
+    dashboardRenderProgress(order.status);
+
+    dashboardDrawer.classList.add("visible");
+    overlay.classList.add("visible");
+    document.body.style.overflow = "hidden";
+}
+
+function closeDashboardOrderDetail() {
+    dashboardDrawer.classList.remove("visible");
+    dashboardSelectedOrderId = null;
+
+    if (
+        !sidebar.classList.contains("open") &&
+        !orderModal.classList.contains("visible")
+    ) {
+        overlay.classList.remove("visible");
+        document.body.style.overflow = "";
+    }
+}
+
+async function dashboardRefreshOrders() {
+    orders = await getDatabase().getOrders();
+    renderEverything();
+}
+
+async function dashboardSaveChanges() {
+    const order = dashboardGetSelectedOrder();
+
+    if (!order) {
+        alert("No se encontró el pedido.");
+        return;
+    }
+
+    const updated = {
+        ...order,
+        status: document.getElementById(
+            "dashboardDetailStatus"
+        ).value,
+        deliveryDate: document.getElementById(
+            "dashboardDeliveryDate"
+        ).value,
+        updatedAt: new Date().toISOString()
+    };
+
+    if (
+        updated.status === "Entregado" &&
+        order.status !== "Entregado"
+    ) {
+        updated.deliveredAt = new Date().toISOString();
+    } else if (updated.status !== "Entregado") {
+        delete updated.deliveredAt;
+    }
+
+    try {
+        await getDatabase().saveOrder(updated);
+        await dashboardRefreshOrders();
+
+        closeDashboardOrderDetail();
+        alert("Pedido actualizado correctamente.");
+    } catch (error) {
+        console.error("Error guardando pedido:", error);
+        alert("No se pudieron guardar los cambios.");
+    }
+}
+
+async function dashboardRegisterPayment() {
+    const order = dashboardGetSelectedOrder();
+
+    if (!order) {
+        alert("No se encontró el pedido.");
+        return;
+    }
+
+    const amount = Number(
+        document.getElementById(
+            "dashboardPaymentAmount"
+        ).value
+    );
+
+    const balance = Math.max(
+        dashboardGetTotal(order) - dashboardGetPaid(order),
+        0
+    );
+
+    if (
+        !Number.isFinite(amount) ||
+        amount <= 0 ||
+        amount > balance
+    ) {
+        alert("Ingresa un pago válido que no supere el saldo pendiente.");
+        return;
+    }
+
+    const now = new Date().toISOString();
+
+    const previousPayments =
+        Array.isArray(order.payments)
+            ? [...order.payments]
+            : dashboardGetPaid(order) > 0
+                ? [{
+                    id: `payment-legacy-${order.id}`,
+                    amount: dashboardGetPaid(order),
+                    method: order.paymentMethod || "Efectivo",
+                    type: "Anticipo",
+                    date: order.createdAt || now
+                }]
+                : [];
+
+    const payments = [
+        ...previousPayments,
+        {
+            id: typeof crypto !== "undefined" &&
+                typeof crypto.randomUUID === "function"
+                    ? `payment-${crypto.randomUUID()}`
+                    : `payment-${Date.now()}-${Math.random()}`,
+            amount,
+            method: order.paymentMethod || "Efectivo",
+            type: "Pago",
+            date: now
+        }
+    ];
+
+    const paid = payments.reduce(
+        (total, payment) =>
+            total + Math.max(Number(payment.amount || 0), 0),
+        0
+    );
+
+    const updated = {
+        ...order,
+        payments,
+        paid,
+        advance: paid,
+        balance: Math.max(dashboardGetTotal(order) - paid, 0),
+        updatedAt: now
+    };
+
+    try {
+        await getDatabase().saveOrder(updated);
+        await dashboardRefreshOrders();
+
+        openDashboardOrderDetail(order.id);
+        alert(`Pago de ${formatMoney(amount)} registrado.`);
+    } catch (error) {
+        console.error("Error registrando pago:", error);
+        alert("No se pudo registrar el pago.");
+    }
+}
+
+async function dashboardDeleteOrder() {
+    const order = dashboardGetSelectedOrder();
+
+    if (!order) {
+        alert("No se encontró el pedido.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `¿Eliminar definitivamente ${order.code}?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await getDatabase().deleteOrder(order.id);
+        closeDashboardOrderDetail();
+        await dashboardRefreshOrders();
+
+        alert("Pedido eliminado correctamente.");
+    } catch (error) {
+        console.error("Error eliminando pedido:", error);
+        alert("No se pudo eliminar el pedido.");
+    }
+}
+
+document.getElementById(
+    "dashboardCloseDrawer"
+).addEventListener("click", closeDashboardOrderDetail);
+
+document.getElementById(
+    "dashboardSaveOrder"
+).addEventListener("click", dashboardSaveChanges);
+
+document.getElementById(
+    "dashboardRegisterPayment"
+).addEventListener("click", dashboardRegisterPayment);
+
+document.getElementById(
+    "dashboardDeleteOrder"
+).addEventListener("click", dashboardDeleteOrder);
+
+overlay.addEventListener("click", () => {
+    if (dashboardDrawer.classList.contains("visible")) {
+        closeDashboardOrderDetail();
+    }
+});
+
+document.addEventListener("keydown", event => {
+    if (
+        event.key === "Escape" &&
+        dashboardDrawer.classList.contains("visible")
+    ) {
+        closeDashboardOrderDetail();
+    }
+});
 
 
 initialize();
